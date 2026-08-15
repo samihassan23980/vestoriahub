@@ -72,10 +72,10 @@
   --color-accent-red: var(--red-500);
   --color-accent-red-hover: var(--red-600);
 
-  /* ─── PROFESSIONAL FONT FAMILY STACKS & FALLBACKS ─── */
+  /* Font Family Stacks */
   --font-heading: var(--font-outfit), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-sans: var(--font-jakarta), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 /* ─── GLOBAL RESET & LCP/SEO OPTIMIZATIONS ─── */
@@ -88,16 +88,10 @@ body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
-  
-  /* Text rendering optimizations */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  
-  /* Modern clean body tracking */
   letter-spacing: -0.01em;
-
-  /* Prevent horizontal layout shifts (Improves CLS) */
   overflow-x: hidden;
   max-width: 100vw;
 }
@@ -105,14 +99,14 @@ body {
 /* ─── TYPOGRAPHY HIERARCHY ─── */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
-  color: var(--forest-700);
+  color: inherit;
   letter-spacing: -0.03em;
   line-height: 1.15;
   text-wrap: balance;
 }
 
 p {
-  color: var(--charcoal-900);
+  color: inherit;
   line-height: 1.65;
   text-wrap: pretty;
 }
@@ -156,12 +150,12 @@ code, kbd, samp, pre {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: var(--sage-400);
+  background-color: var(--forest-600);
   border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: var(--forest-700);
+  background-color: var(--gold-500);
 }
 
 .no-scrollbar::-webkit-scrollbar {
@@ -172,86 +166,3 @@ code, kbd, samp, pre {
   scrollbar-width: none;
 }
 
-/* ─── ADMIN PANEL ISOLATION (DEEP FOREST SECURE SUITE) ─── */
-.admin-isolated-theme {
-  --background: #10201B !important;
-  --foreground: #F8F0E5 !important;
-  --color-surface: #16241F !important;
-  --color-border: #25473C !important;
-
-  background-color: #10201B !important;
-  color: #F8F0E5 !important;
-}
-
-/* Hardcoded light surfaces override inside admin */
-.admin-isolated-theme .bg-white,
-.admin-isolated-theme [class*="bg-white"],
-.admin-isolated-theme .bg-neutral-50,
-.admin-isolated-theme .bg-gray-50,
-.admin-isolated-theme [class*="bg-[#"] {
-  background-color: #16241F !important;
-  border-color: #25473C !important;
-}
-
-.admin-isolated-theme .min-h-screen,
-.admin-isolated-theme .bg-gray-100 {
-  background-color: #10201B !important;
-}
-
-/* Admin Headings & High Contrast Text */
-.admin-isolated-theme h1,
-.admin-isolated-theme h2,
-.admin-isolated-theme h3,
-.admin-isolated-theme h4,
-.admin-isolated-theme h5,
-.admin-isolated-theme h6,
-.admin-isolated-theme .text-neutral-900,
-.admin-isolated-theme .text-gray-900 {
-  color: #F8F0E5 !important;
-}
-
-/* Admin Subtext & Secondary Labels */
-.admin-isolated-theme p,
-.admin-isolated-theme span:not([class*="bg-"]),
-.admin-isolated-theme td,
-.admin-isolated-theme th,
-.admin-isolated-theme .text-gray-500 {
-  color: #A8C3B0 !important;
-}
-
-/* Admin Forms & Tables */
-.admin-isolated-theme input,
-.admin-isolated-theme select,
-.admin-isolated-theme textarea {
-  background-color: #10201B !important;
-  border-color: #25473C !important;
-  color: #F8F0E5 !important;
-}
-
-.admin-isolated-theme input::placeholder,
-.admin-isolated-theme textarea::placeholder {
-  color: #8A8F8C !important;
-}
-
-.admin-isolated-theme border-collapse,
-.admin-isolated-theme .divide-y {
-  border-color: #25473C !important;
-}
-
-.admin-isolated-theme thead tr {
-  background-color: #1C352D !important;
-}
-
-.admin-isolated-theme tr:hover {
-  background-color: rgba(37, 71, 60, 0.4) !important;
-}
-
-/* Admin Buttons */
-.admin-isolated-theme button[class*="border"] {
-  border-color: #25473C !important;
-  color: #F8F0E5 !important;
-}
-
-.admin-isolated-theme button[class*="border"]:hover {
-  background-color: #1C352D !important;
-}

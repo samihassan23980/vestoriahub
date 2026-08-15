@@ -12,10 +12,10 @@ import {
   ExternalLink,
   Link2,
   MessageSquare,
-  Star,
+  Tag,
 } from "lucide-react";
 
-const TwitterIcon = ({ size = 16 }) => (
+const TwitterIcon = ({ size = 15 }) => (
   <svg
     width={size}
     height={size}
@@ -30,7 +30,7 @@ const TwitterIcon = ({ size = 16 }) => (
   </svg>
 );
 
-const FacebookIcon = ({ size = 16 }) => (
+const FacebookIcon = ({ size = 15 }) => (
   <svg
     width={size}
     height={size}
@@ -45,6 +45,7 @@ const FacebookIcon = ({ size = 16 }) => (
   </svg>
 );
 
+// ─── EMBEDDED DYNAMIC BLOCK RENDERER ──────────────────────────────────────────
 const EmbeddedBlockRenderer = ({ blockData }) => {
   const [copied, setCopied] = useState(false);
 
@@ -54,7 +55,7 @@ const EmbeddedBlockRenderer = ({ blockData }) => {
     try {
       await navigator.clipboard.writeText(blockData.button?.text || "");
       setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
+      setTimeout(() => setCopied(false), 2200);
     } catch {
       setCopied(false);
     }
@@ -63,122 +64,118 @@ const EmbeddedBlockRenderer = ({ blockData }) => {
   switch (blockData.blockType) {
     case "deal_highlight":
       return (
-        <div className="not-prose relative my-10 overflow-hidden rounded-xl border border-[rgba(124,92,252,0.28)] bg-[var(--navy-800)] p-4 shadow-card-hover sm:p-5 lg:rounded-[14px] lg:p-6">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(124,92,252,0.24),transparent_38%),radial-gradient(circle_at_bottom_left,rgba(110,79,245,0.22),transparent_34%)]" />
+        <div className="not-prose relative my-8 overflow-hidden rounded-[22px] border border-[#25473C] bg-[#10201B] p-5 sm:p-6 shadow-sm">
+          <div className="pointer-events-none absolute top-0 right-0 w-48 h-48 bg-[#D9A441]/10 rounded-full blur-3xl" />
 
-          <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-            <div>
-              <div className="mb-2 flex items-center gap-2">
-                <ShieldCheck size={14} className="text-[#22C55E]" />
-                <span className="text-[10px] font-semibold uppercase tracking-[0.04em] text-[#22C55E] sm:text-[11px]">
-                  Editor Verified
-                </span>
+          <div className="relative z-10 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div className="max-w-md">
+              <div className="mb-2 flex items-center gap-1.5 text-[10.5px] font-heading font-extrabold uppercase tracking-widest text-[#D9A441]">
+                <ShieldCheck size={14} className="text-[#34D399]" />
+                <span>Verified Deal Highlight</span>
               </div>
 
-              <h3 className="text-[1.125rem] font-semibold leading-[1.3] text-white sm:text-[1.25rem] lg:text-[1.375rem]">
+              <h3 className="text-[1.25rem] sm:text-[1.375rem] font-heading font-extrabold text-[#FDFBF7] leading-snug">
                 {blockData.title}
               </h3>
 
-              {blockData.description ? (
-                <p className="mt-2 text-[0.9375rem] leading-[1.7] text-white/68 sm:text-base">
+              {blockData.description && (
+                <p className="mt-2 text-[13.5px] leading-relaxed text-[#D5E4D9] font-normal">
                   {blockData.description}
                 </p>
-              ) : null}
+              )}
 
-              {blockData.discountBadge ? (
-                <div className="mt-4 text-[1.75rem] font-bold leading-none text-[var(--purple-400)] sm:text-[2rem] lg:text-[2.25rem]">
+              {blockData.discountBadge && (
+                <div className="mt-3 text-[1.75rem] font-heading font-black text-[#D9A441] leading-none">
                   {blockData.discountBadge}
                 </div>
-              ) : null}
+              )}
             </div>
 
-            {blockData.button?.text ? (
-              <div className="w-full md:w-auto md:min-w-[240px]">
-                <div className="flex items-center justify-between gap-3 rounded-lg border border-dashed border-[var(--purple-400)]/50 bg-white/10 px-3 py-2 sm:px-4 sm:py-2.5">
-                  <span className="font-mono text-[1rem] font-bold tracking-wider text-[var(--purple-300)] sm:text-[1.125rem] lg:text-[1.25rem]">
+            {blockData.button?.text && (
+              <div className="w-full md:w-auto md:min-w-[220px]">
+                <div className="flex items-center justify-between gap-3 rounded-xl border-2 border-dashed border-[#25473C] bg-[#162B24] p-3 shadow-inner">
+                  <span className="font-mono text-[15px] font-bold text-[#FDFBF7] tracking-wider truncate">
                     {blockData.button.text}
                   </span>
 
                   <button
                     type="button"
                     onClick={handleCopy}
-                    className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-all sm:px-4 sm:py-2 sm:text-sm ${
+                    className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-[11.5px] font-heading font-bold uppercase tracking-wider transition-all shadow-xs shrink-0 ${
                       copied
-                        ? "bg-[#22C55E] text-white"
-                        : "bg-[var(--purple-700)] text-white hover:bg-[var(--purple-800)]"
+                        ? "bg-[#34D399] text-[#10201B]"
+                        : "bg-[#D9A441] text-[#16241F] hover:bg-[#BE8E34]"
                     }`}
                   >
                     {copied ? (
                       <>
-                        <CheckCheck size={14} />
-                        Copied
+                        <CheckCheck size={13} />
+                        <span>Copied</span>
                       </>
                     ) : (
                       <>
-                        <Copy size={14} />
-                        Copy
+                        <Copy size={13} />
+                        <span>Copy</span>
                       </>
                     )}
                   </button>
                 </div>
               </div>
-            ) : null}
+            )}
           </div>
         </div>
       );
 
     case "product_card":
       return (
-        <div className="not-prose relative my-10 flex flex-col gap-5 overflow-hidden rounded-xl border border-[var(--indigo-line)] bg-[var(--navy-600)] p-4 shadow-card transition-all duration-200 hover:border-[var(--purple-500)] hover:shadow-card-hover sm:p-5 md:flex-row lg:rounded-[14px]">
-          {blockData.discountBadge ? (
-            <div className="absolute left-5 top-4 z-10 rounded-md bg-[var(--purple-600)] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-white sm:text-[11px]">
+        <div className="not-prose relative my-8 flex flex-col gap-5 overflow-hidden rounded-[22px] border-2 border-[#E2D9CC] bg-[#FFFFFF] p-5 shadow-xs transition-all duration-300 hover:border-[#BDD6C4] sm:flex-row items-center">
+          {blockData.discountBadge && (
+            <div className="absolute left-4 top-4 z-10 rounded-full bg-[#D9A441] text-[#16241F] px-2.5 py-0.5 text-[9.5px] font-heading font-black uppercase tracking-wider shadow-xs">
               {blockData.discountBadge}
             </div>
-          ) : null}
+          )}
 
-          {blockData.imageUrl ? (
-            <div className="flex aspect-square w-full flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[var(--navy-500)] p-4 md:w-[200px]">
+          {blockData.imageUrl && (
+            <div className="flex aspect-square w-full sm:w-[170px] shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#FDFBF7] border border-[#E2D9CC] p-3">
               <img
                 src={blockData.imageUrl}
-                alt={blockData.title || "Product"}
+                alt={blockData.title || "Product Offer"}
                 className="h-full w-full object-contain"
               />
             </div>
-          ) : null}
+          )}
 
-          <div className="flex flex-grow flex-col justify-center">
-            <h3 className="text-[1.125rem] font-semibold leading-[1.3] text-white sm:text-[1.25rem] lg:text-[1.375rem]">
-              {blockData.title}
-            </h3>
+          <div className="flex flex-grow flex-col justify-between w-full">
+            <div>
+              <h3 className="text-[1.125rem] font-heading font-bold text-[#10201B] leading-snug">
+                {blockData.title}
+              </h3>
 
-            {blockData.description ? (
-              <p className="mt-3 line-clamp-3 text-[0.9375rem] leading-[1.7] text-[var(--lavender-400)] sm:text-base">
-                {blockData.description}
-              </p>
-            ) : null}
+              {blockData.description && (
+                <p className="mt-2 text-[13.5px] font-normal leading-relaxed text-[#6B7280] line-clamp-2">
+                  {blockData.description}
+                </p>
+              )}
+            </div>
 
-            <div className="mt-5 flex flex-col gap-4 border-t border-[var(--indigo-line)] pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mt-4 flex items-center justify-between border-t border-[#E2D9CC] pt-3.5 gap-4">
               {blockData.price ? (
-                <span className="text-[1.75rem] font-bold leading-none text-white sm:text-[2rem] lg:text-[2.25rem]">
+                <span className="text-[1.5rem] font-heading font-black text-[#10201B] leading-none">
                   {blockData.price}
                 </span>
-              ) : null}
+              ) : <div />}
 
-              {blockData.button?.url ? (
+              {blockData.button?.url && (
                 <a
                   href={blockData.button.url}
                   target={blockData.button?.isExternal ? "_blank" : "_self"}
-                  rel={
-                    blockData.button?.isExternal
-                      ? "noopener noreferrer"
-                      : undefined
-                  }
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--purple-700)] px-4 py-2.5 text-sm font-semibold !text-white transition-all duration-200 hover:bg-[var(--purple-800)] sm:px-5 sm:py-3 lg:text-[0.9375rem]"
+                  rel={blockData.button?.isExternal ? "noopener noreferrer" : undefined}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-full bg-[#1C352D] text-[#FDFBF7] hover:bg-[#10201B] px-5 py-2.5 text-[12.5px] font-heading font-bold uppercase tracking-wider shadow-xs transition-colors"
                 >
-                  <ShoppingCart size={15} className="!text-white" />
-                  {blockData.button?.text || "Shop Now"}
+                  <ShoppingCart size={14} className="text-[#D9A441]" />
+                  <span>{blockData.button?.text || "Shop Now"}</span>
                 </a>
-              ) : null}
+              )}
             </div>
           </div>
         </div>
@@ -186,98 +183,17 @@ const EmbeddedBlockRenderer = ({ blockData }) => {
 
     case "custom_button":
       return (
-        <div className="not-prose my-10 flex justify-center">
+        <div className="not-prose my-8 flex justify-center">
           <a
             href={blockData.button?.url || "#"}
             target={blockData.button?.isExternal ? "_blank" : "_self"}
-            rel={
-              blockData.button?.isExternal ? "noopener noreferrer" : undefined
-            }
-            className="group inline-flex items-center gap-2 rounded-lg bg-[var(--purple-700)] px-4 py-2.5 text-sm font-semibold !text-white shadow-[0_8px_24px_rgba(124,92,252,0.24)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[var(--purple-800)] sm:px-5 sm:py-3 lg:text-[0.9375rem]"
+            rel={blockData.button?.isExternal ? "noopener noreferrer" : undefined}
+            className="group inline-flex items-center gap-2 rounded-full bg-[#1C352D] hover:bg-[#10201B] text-[#FDFBF7] font-heading font-bold text-[13.5px] px-6 py-3 shadow-xs transition-all duration-200"
           >
-            <Sparkles size={16} className="!text-white" />
-            {blockData.button?.text || "View Deal"}
-            <ExternalLink
-              size={16}
-              className="!text-white transition-transform duration-200 group-hover:translate-x-1"
-            />
+            <Sparkles size={15} className="text-[#D9A441]" />
+            <span>{blockData.button?.text || "View Verified Deal"}</span>
+            <ExternalLink size={14} className="text-[#D9A441]" />
           </a>
-        </div>
-      );
-
-    case "amazon_gallery":
-      return (
-        <div className="not-prose relative my-10 overflow-hidden rounded-xl border border-[var(--indigo-line)] bg-[var(--navy-600)] shadow-card sm:rounded-[14px]">
-          <div className="flex flex-col md:flex-row">
-            {/* Image side */}
-            <div className="relative flex w-full flex-shrink-0 items-center justify-center bg-[var(--navy-500)] p-6 md:w-[280px]">
-              {blockData.discountBadge ? (
-                <div className="absolute left-4 top-4 z-10 rounded-md bg-[var(--purple-600)] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-white sm:text-[11px]">
-                  {blockData.discountBadge}
-                </div>
-              ) : null}
-
-              <div className="absolute right-4 top-4 z-10 flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 backdrop-blur">
-                <Star size={11} className="fill-[#F6BE00] text-[#F6BE00]" />
-                <span className="text-[10px] font-semibold text-white">
-                  Marketplace Pick
-                </span>
-              </div>
-
-              {blockData.imageUrl ? (
-                <img
-                  src={blockData.imageUrl}
-                  alt={blockData.title || "Product"}
-                  className="aspect-square w-full max-w-[220px] object-contain"
-                />
-              ) : (
-                <div className="flex aspect-square w-full max-w-[220px] items-center justify-center rounded-lg bg-[var(--navy-600)] text-[var(--lavender-500)]">
-                  No Image
-                </div>
-              )}
-            </div>
-
-            {/* Content side */}
-            <div className="flex flex-grow flex-col justify-center p-5 sm:p-6">
-              <span className="mb-2 inline-flex w-fit items-center gap-1.5 rounded-full bg-[var(--purple-950)] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--purple-300)] sm:text-[11px]">
-                Amazon Gallery
-              </span>
-
-              <h3 className="text-[1.125rem] font-semibold leading-[1.3] text-white sm:text-[1.25rem] lg:text-[1.375rem]">
-                {blockData.title}
-              </h3>
-
-              {blockData.description ? (
-                <p className="mt-3 line-clamp-3 text-[0.9375rem] leading-[1.7] text-[var(--lavender-400)] sm:text-base">
-                  {blockData.description}
-                </p>
-              ) : null}
-
-              <div className="mt-5 flex flex-col gap-4 border-t border-[var(--indigo-line)] pt-4 sm:flex-row sm:items-center sm:justify-between">
-                {blockData.price ? (
-                  <span className="text-[1.75rem] font-bold leading-none text-white sm:text-[2rem] lg:text-[2.25rem]">
-                    {blockData.price}
-                  </span>
-                ) : null}
-
-                {blockData.button?.url ? (
-                  <a
-                    href={blockData.button.url}
-                    target={blockData.button?.isExternal ? "_blank" : "_self"}
-                    rel={
-                      blockData.button?.isExternal
-                        ? "noopener noreferrer"
-                        : undefined
-                    }
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--purple-700)] px-4 py-2.5 text-sm font-semibold !text-white transition-all duration-200 hover:bg-[var(--purple-800)] sm:px-5 sm:py-3 lg:text-[0.9375rem]"
-                  >
-                    {blockData.button?.text || "View on Amazon"}
-                    <ExternalLink size={15} className="!text-white" />
-                  </a>
-                ) : null}
-              </div>
-            </div>
-          </div>
         </div>
       );
 
@@ -286,12 +202,12 @@ const EmbeddedBlockRenderer = ({ blockData }) => {
   }
 };
 
+// ─── SOCIAL SHARE COMPONENT ───────────────────────────────────────────────────
 export const ShareBar = () => {
   const [linkCopied, setLinkCopied] = useState(false);
 
   const share = (platform) => {
-    const url = encodeURIComponent(window.location.href);
-
+    const url = encodeURIComponent(typeof window !== "undefined" ? window.location.href : "");
     const urls = {
       twitter: `https://twitter.com/intent/tweet?url=${url}`,
       facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
@@ -314,40 +230,41 @@ export const ShareBar = () => {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="text-[10px] font-semibold uppercase tracking-[0.04em] text-white/55 sm:text-[11px]">
-        Share
+      <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#8A8F8C] mr-1">
+        Share:
       </span>
 
       <button
         type="button"
         onClick={() => share("twitter")}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-xs font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/15"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-[#E2D9CC] bg-[#FDFBF7] hover:bg-[#EBF3EE] px-3 py-1.5 text-[12px] font-heading font-semibold text-[#1C352D] transition-colors"
       >
-        <TwitterIcon size={13} />
-        Twitter
+        <TwitterIcon size={12} />
+        <span>Twitter</span>
       </button>
 
       <button
         type="button"
         onClick={() => share("facebook")}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-xs font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/15"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-[#E2D9CC] bg-[#FDFBF7] hover:bg-[#EBF3EE] px-3 py-1.5 text-[12px] font-heading font-semibold text-[#1C352D] transition-colors"
       >
-        <FacebookIcon size={13} />
-        Facebook
+        <FacebookIcon size={12} />
+        <span>Facebook</span>
       </button>
 
       <button
         type="button"
         onClick={copyLink}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--purple-500)] px-3 py-2 text-xs font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-[var(--purple-600)]"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-[#BDD6C4] bg-[#EBF3EE] hover:bg-[#1C352D] hover:text-[#FDFBF7] px-3 py-1.5 text-[12px] font-heading font-bold text-[#1C352D] transition-all group/copy"
       >
-        <Link2 size={13} />
-        {linkCopied ? "Copied" : "Copy Link"}
+        <Link2 size={12} className="text-[#D9A441]" />
+        <span>{linkCopied ? "Copied!" : "Copy Link"}</span>
       </button>
     </div>
   );
 };
 
+// ─── MAIN ARTICLE CLIENT COMPONENT ────────────────────────────────────────────
 export default function BlogArticleClient({ article }) {
   const [scrollPct, setScrollPct] = useState(0);
   const [showBackTop, setShowBackTop] = useState(false);
@@ -357,13 +274,12 @@ export default function BlogArticleClient({ article }) {
   useEffect(() => {
     const onScroll = () => {
       const el = articleRef.current;
-
       if (!el) return;
 
       const rect = el.getBoundingClientRect();
       const readableHeight = Math.max(1, rect.height - window.innerHeight);
       const progress = Math.round(
-        Math.min(100, Math.max(0, (-rect.top / readableHeight) * 100)),
+        Math.min(100, Math.max(0, (-rect.top / readableHeight) * 100))
       );
 
       setScrollPct(progress);
@@ -371,7 +287,6 @@ export default function BlogArticleClient({ article }) {
     };
 
     onScroll();
-
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
 
@@ -390,7 +305,7 @@ export default function BlogArticleClient({ article }) {
     return parts.map((part, index) => {
       if (part.match(regex)) {
         const block = article.embeddedBlocks?.find(
-          (item) => item.placementToken === part,
+          (item) => item.placementToken === part
         );
 
         return block ? (
@@ -411,95 +326,92 @@ export default function BlogArticleClient({ article }) {
   if (!article) return null;
 
   return (
-    <div className="bg-[var(--navy-800)] text-white min-h-screen">
+    <>
+      {/* Scroll Progress Bar */}
       <div
-        className="fixed left-0 top-0 z-[9999] h-[3px] bg-gradient-to-r from-[var(--purple-500)] to-[var(--purple-700)] transition-[width] duration-100 ease-out"
+        className="fixed left-0 top-0 z-[9999] h-[3px] bg-[#D9A441] transition-[width] duration-100 ease-out"
         style={{ width: `${scrollPct}%` }}
       />
 
-      <article ref={articleRef} className="w-full min-w-0">
+      <article ref={articleRef} className="w-full min-w-0 font-sans">
+        
+        {/* Rich Text Body Container */}
         <div
           className="
-            prose-custom max-w-none rounded-xl border border-[var(--indigo-line)] bg-[var(--navy-600)] p-4 shadow-card sm:p-6 lg:rounded-[14px] lg:p-8
+            prose-custom max-w-none text-[#16241F]
 
-            [&_*]:![color:inherit]
+            [&>p]:mb-5 [&>p]:text-[15px] [&>p]:font-normal [&>p]:leading-relaxed [&>p]:text-[#6B7280]
 
-            [&>p]:mb-6 [&>p]:text-[0.9375rem] [&>p]:font-normal [&>p]:leading-[1.7] [&>p]:![color:var(--lavender-400)] sm:[&>p]:text-base
+            [&_h2]:mt-10 [&_h2]:mb-4 [&_h2]:scroll-mt-28 [&_h2]:text-[1.45rem] [&_h2]:font-heading [&_h2]:font-extrabold [&_h2]:leading-tight [&_h2]:text-[#10201B] [&_h2]:border-b [&_h2]:border-[#E2D9CC] [&_h2]:pb-2.5
 
-            [&_h1]:![color:white] [&_h2]:![color:white] [&_h3]:![color:white] [&_h4]:![color:white] [&_h5]:![color:white] [&_h6]:![color:white]
+            [&_h3]:mt-7 [&_h3]:mb-3 [&_h3]:scroll-mt-28 [&_h3]:text-[1.18rem] [&_h3]:font-heading [&_h3]:font-bold [&_h3]:leading-snug [&_h3]:text-[#10201B]
 
-            [&_h2]:mt-12 [&_h2]:mb-5 [&_h2]:scroll-mt-28 [&_h2]:text-[1.5rem] [&_h2]:font-bold [&_h2]:leading-[1.25] sm:[&_h2]:text-[1.75rem] lg:[&_h2]:text-[2rem] xl:[&_h2]:text-[2.25rem]
-
-            [&_h3]:mt-8 [&_h3]:mb-4 [&_h3]:scroll-mt-28 [&_h3]:text-[1.125rem] [&_h3]:font-semibold [&_h3]:leading-[1.3] sm:[&_h3]:text-[1.25rem] lg:[&_h3]:text-[1.375rem]
-
-            [&_h4]:mt-6 [&_h4]:mb-3 [&_h4]:scroll-mt-28 [&_h4]:text-[0.9375rem] [&_h4]:font-semibold [&_h4]:leading-[1.4] sm:[&_h4]:text-[1rem] lg:[&_h4]:text-[1.0625rem]
+            [&_h4]:mt-5 [&_h4]:mb-2 [&_h4]:scroll-mt-28 [&_h4]:text-[15px] [&_h4]:font-heading [&_h4]:font-bold [&_h4]:text-[#1C352D]
 
             [&_ul]:mb-6 [&_ul]:list-none [&_ul]:pl-0
-            [&_ul>li]:relative [&_ul>li]:py-1.5 [&_ul>li]:pl-6 [&_ul>li]:text-[0.9375rem] [&_ul>li]:leading-[1.7] [&_ul>li]:![color:var(--lavender-400)] sm:[&_ul>li]:text-base
-            [&_ul>li]:before:absolute [&_ul>li]:before:left-0 [&_ul>li]:before:top-[15px] [&_ul>li]:before:h-[6px] [&_ul>li]:before:w-[6px] [&_ul>li]:before:rounded-full [&_ul>li]:before:bg-[var(--purple-500)] [&_ul>li]:before:content-['']
+            [&_ul>li]:relative [&_ul>li]:py-1.5 [&_ul>li]:pl-6 [&_ul>li]:text-[15px] [&_ul>li]:leading-relaxed [&_ul>li]:text-[#6B7280]
+            [&_ul>li]:before:absolute [&_ul>li]:before:left-0 [&_ul>li]:before:top-[11px] [&_ul>li]:before:h-[6px] [&_ul>li]:before:w-[6px] [&_ul>li]:before:rounded-full [&_ul>li]:before:bg-[#D9A441] [&_ul>li]:before:content-['']
 
-            [&_ol]:mb-6 [&_ol]:list-decimal [&_ol]:pl-6
-            [&_ol>li]:py-1.5 [&_ol>li]:text-[0.9375rem] [&_ol>li]:leading-[1.7] [&_ol>li]:![color:var(--lavender-400)] sm:[&_ol>li]:text-base
+            [&_ol]:mb-6 [&_ol]:list-decimal [&_ol]:pl-5
+            [&_ol>li]:py-1.5 [&_ol>li]:text-[15px] [&_ol>li]:leading-relaxed [&_ol>li]:text-[#6B7280]
 
-            [&_blockquote]:my-8 [&_blockquote]:rounded-r-xl [&_blockquote]:border-l-4 [&_blockquote]:border-[var(--purple-500)] [&_blockquote]:bg-[var(--navy-500)] [&_blockquote]:px-5 [&_blockquote]:py-4 [&_blockquote]:text-[0.9375rem] [&_blockquote]:leading-[1.7] [&_blockquote]:![color:var(--lavender-300)] sm:[&_blockquote]:text-base
+            [&_blockquote]:my-6 [&_blockquote]:rounded-r-2xl [&_blockquote]:border-l-4 [&_blockquote]:border-[#D9A441] [&_blockquote]:bg-[#FDFBF7] [&_blockquote]:px-5 [&_blockquote]:py-4 [&_blockquote]:text-[15px] [&_blockquote]:leading-relaxed [&_blockquote]:text-[#16241F] [&_blockquote]:font-normal
 
-            [&_strong]:font-semibold [&_strong]:![color:white]
-            [&_a]:font-medium [&_a]:![color:var(--purple-400)] [&_a]:underline [&_a]:decoration-[var(--purple-400)]/30 [&_a]:underline-offset-4 hover:[&_a]:decoration-[var(--purple-400)]
+            [&_strong]:font-heading [&_strong]:font-bold [&_strong]:text-[#10201B]
+            [&_a]:font-semibold [&_a]:text-[#1C352D] [&_a]:underline [&_a]:decoration-[#D9A441] [&_a]:decoration-2 [&_a]:underline-offset-4 hover:[&_a]:text-[#D9A441]
 
-            [&_img]:my-8 [&_img]:w-full [&_img]:rounded-xl [&_img]:shadow-card
+            [&_img]:my-7 [&_img]:w-full [&_img]:rounded-2xl [&_img]:border [&_img]:border-[#E2D9CC]
 
-            [&_table]:my-8 [&_table]:w-full [&_table]:border-collapse [&_table]:overflow-hidden [&_table]:rounded-xl [&_table]:text-sm
-            [&_th]:bg-[var(--navy-800)] [&_th]:px-4 [&_th]:py-3 [&_th]:text-left [&_th]:font-semibold [&_th]:![color:white]
-            [&_td]:border [&_td]:border-[var(--indigo-line)] [&_td]:px-4 [&_td]:py-3 [&_td]:![color:var(--lavender-400)]
-            [&_tr:nth-child(even)_td]:bg-[var(--navy-500)]
-
-            [&>p:first-of-type]:first-letter:float-left [&>p:first-of-type]:first-letter:mr-3 [&>p:first-of-type]:first-letter:mt-2 [&>p:first-of-type]:first-letter:text-[3.25rem] [&>p:first-of-type]:first-letter:font-bold [&>p:first-of-type]:first-letter:leading-[0.85] [&>p:first-of-type]:first-letter:![color:white]
+            [&_table]:my-6 [&_table]:w-full [&_table]:border-collapse [&_table]:overflow-hidden [&_table]:rounded-xl [&_table]:text-[13.5px]
+            [&_th]:bg-[#FDFBF7] [&_th]:border [&_th]:border-[#E2D9CC] [&_th]:px-4 [&_th]:py-3 [&_th]:text-left [&_th]:font-heading [&_th]:font-bold [&_th]:text-[#10201B]
+            [&_td]:border [&_td]:border-[#E2D9CC] [&_td]:px-4 [&_td]:py-3 [&_td]:text-[#6B7280]
+            [&_tr:nth-child(even)_td]:bg-[#FDFBF7]
           "
         >
           {renderContent()}
         </div>
 
-        {article.faqs?.length > 0 ? (
-          <section className="mt-12 rounded-xl border border-[var(--indigo-line)] bg-[var(--navy-600)] p-4 shadow-card sm:mt-16 sm:p-6 lg:rounded-[14px] lg:p-8">
-            <div className="mb-8 flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--purple-950)] text-[var(--purple-300)]">
-                <MessageSquare size={20} />
+        {/* ── FAQ SECTION ── */}
+        {article.faqs?.length > 0 && (
+          <section className="mt-12 rounded-[22px] border-2 border-[#E2D9CC] bg-[#FDFBF7] p-5 sm:p-7 shadow-xs">
+            <div className="mb-6 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EBF3EE] border border-[#BDD6C4] text-[#1C352D]">
+                <MessageSquare size={18} />
               </div>
 
               <div>
-                <span className="text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--purple-400)] sm:text-[11px]">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#8A8F8C]">
                   Help Center
                 </span>
-
-                <h3 className="text-[1.5rem] font-bold leading-[1.25] text-white sm:text-[1.75rem] lg:text-[2rem] xl:text-[2.25rem]">
+                <h3 className="text-[1.35rem] font-heading font-extrabold text-[#10201B]">
                   Frequently Asked Questions
                 </h3>
               </div>
             </div>
 
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2.5">
               {article.faqs.map((faq, index) => (
                 <div
                   key={`${faq.question}-${index}`}
                   className={`overflow-hidden rounded-xl border transition-all duration-200 ${
                     openFaq === index
-                      ? "border-[var(--purple-500)] bg-[var(--navy-600)] shadow-card"
-                      : "border-[var(--indigo-line)] bg-[var(--navy-500)] hover:border-[var(--purple-500)]"
+                      ? "border-[#BDD6C4] bg-[#FFFFFF] shadow-2xs"
+                      : "border-[#E2D9CC] bg-[#FFFFFF] hover:border-[#BDD6C4]"
                   }`}
                 >
                   <button
                     type="button"
                     onClick={() => setOpenFaq(openFaq === index ? null : index)}
-                    className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left outline-none sm:px-5"
+                    className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left outline-none sm:px-5"
                   >
-                    <span className="text-[0.9375rem] font-semibold leading-[1.4] text-white sm:text-[1rem] lg:text-[1.0625rem]">
+                    <span className="text-[14.5px] font-heading font-bold leading-snug text-[#10201B]">
                       {faq.question}
                     </span>
 
                     <ChevronDown
-                      size={18}
-                      className={`shrink-0 text-[var(--lavender-500)] transition-transform duration-200 ${
-                        openFaq === index ? "rotate-180 text-[var(--purple-400)]" : ""
+                      size={16}
+                      className={`shrink-0 text-[#8A8F8C] transition-transform duration-200 ${
+                        openFaq === index ? "rotate-180 text-[#D9A441]" : ""
                       }`}
                     />
                   </button>
@@ -507,11 +419,11 @@ export default function BlogArticleClient({ article }) {
                   <div
                     className={`overflow-hidden px-4 transition-all duration-300 ease-in-out sm:px-5 ${
                       openFaq === index
-                        ? "max-h-[600px] pb-5 opacity-100"
+                        ? "max-h-[500px] pb-4 opacity-100"
                         : "max-h-0 opacity-0"
                     }`}
                   >
-                    <p className="border-t border-[var(--indigo-line)] pt-4 text-[0.9375rem] leading-[1.7] text-[var(--lavender-400)] sm:text-base">
+                    <p className="border-t border-[#E2D9CC] pt-3 text-[13.5px] font-normal leading-relaxed text-[#6B7280]">
                       {faq.answer}
                     </p>
                   </div>
@@ -519,38 +431,40 @@ export default function BlogArticleClient({ article }) {
               ))}
             </div>
           </section>
-        ) : null}
+        )}
 
-        {article.tags?.length > 0 ? (
-          <div className="mt-10 flex flex-wrap gap-2 rounded-xl border border-[var(--indigo-line)] bg-[var(--navy-600)] p-4 shadow-card sm:p-5">
-            <span className="mr-1 self-center text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--lavender-500)] sm:text-[11px]">
-              Tags:
+        {/* ── ARTICLE TAGS ── */}
+        {article.tags?.length > 0 && (
+          <div className="mt-8 flex flex-wrap items-center gap-2 pt-6 border-t border-[#E2D9CC]">
+            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#8A8F8C] mr-1">
+              Tagged:
             </span>
 
             {article.tags.map((tag) => (
               <span
                 key={tag}
-                className="rounded-full bg-[var(--purple-950)] px-4 py-1.5 text-xs font-medium text-[var(--purple-300)] transition-colors hover:bg-[var(--purple-500)] hover:text-white sm:text-sm"
+                className="rounded-full bg-[#EBF3EE] border border-[#BDD6C4] px-3 py-1 text-[11.5px] font-heading font-semibold text-[#1C352D]"
               >
-                {tag}
+                #{tag}
               </span>
             ))}
           </div>
-        ) : null}
+        )}
       </article>
 
+      {/* Floating Back-To-Top Trigger */}
       <button
         type="button"
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
         aria-label="Back to top"
-        className={`fixed bottom-8 right-8 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--purple-700)] text-white shadow-card-hover transition-all duration-300 hover:-translate-y-1 hover:bg-[var(--purple-800)] ${
+        className={`fixed bottom-8 right-8 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-[#1C352D] hover:bg-[#10201B] text-[#FDFBF7] shadow-lg transition-all duration-300 ${
           showBackTop
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none translate-y-4 opacity-0"
         }`}
       >
-        <ArrowUp size={19} />
+        <ArrowUp size={18} strokeWidth={2.5} />
       </button>
-    </div>
+    </>
   );
 }

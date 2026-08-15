@@ -1,6 +1,5 @@
 import React from "react";
 import Link from "next/link";
-import Image from "next/image";
 import {
   AlertCircle,
   BookOpen,
@@ -8,6 +7,7 @@ import {
   Layers,
   Star,
   Compass,
+  FolderOpen,
 } from "lucide-react";
 import CategoryInfiniteFeed from "@/app/Components/CategoryInfiniteFeed";
 
@@ -16,23 +16,22 @@ export async function generateMetadata({ params }) {
   const { slug } = await params;
   const categoryData = await getCategoryData(slug);
 
-  // Fallback metadata if the category doesn't exist
   if (!categoryData || !categoryData.category) {
     return {
-      title: "Category Not Found | VestoriaHub",
+      title: "Category Not Found | VestoriaHub.com",
       robots: { index: false, follow: true },
     };
   }
 
   const category = categoryData.category;
 
-
   return {
-    title: `${category.seo.metaTitle} Guides & Deals`,
-    description: category.seo.metaDescription || `Discover strictly verified coupons, curated marketplace discounts & expert shopping guides for ${category.name}.`,
-    // 💡 Added canonical alternates tag matching the dynamic blog category path
+    title: `${category.seo?.metaTitle || category.name} Guides & Deals | VestoriaHub`,
+    description:
+      category.seo?.metaDescription ||
+      `Discover strictly verified coupons, curated marketplace discounts & expert shopping guides for ${category.name}.`,
     alternates: {
-      canonical: `/blog-categories/${slug}`, // Adjust this path match if your folder structure dictates otherwise (e.g., `/categories/${slug}`)
+      canonical: `/blog-categories/${slug}`,
     },
   };
 }
@@ -43,12 +42,12 @@ async function getCategoryData(slug) {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     const res = await fetch(
       `${baseUrl}/api/public/blog-categories/${slug}?page=1&limit=12`,
-    { 
-        next: { 
+      {
+        next: {
           revalidate: 3600,
-          tags: ["blogs", "categories", `category-${slug}`] // 🔥 Tag base cache added here
-        } 
-      },
+          tags: ["blogs", "categories", `category-${slug}`],
+        },
+      }
     );
     if (!res.ok) return null;
     const result = await res.json();
@@ -63,21 +62,22 @@ export default async function BlogCategoryDetailsPage({ params }) {
   const { slug } = await params;
   const data = await getCategoryData(slug);
 
+  // ── ERROR / NOT FOUND STATE ──
   if (!data || !data.category) {
     return (
-      <div className="flex min-h-[70vh] flex-col items-center justify-center bg-navy-800 px-6 text-center font-sans">
-        <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center mb-5">
-          <AlertCircle size={36} className="text-red-500" />
+      <div className="flex min-h-[60vh] flex-col items-center justify-center bg-[#F8F0E5] px-4 text-center font-sans">
+        <div className="w-16 h-16 rounded-full bg-[#FFFFFF] flex items-center justify-center mb-4 border border-[#E2D9CC] shadow-xs">
+          <AlertCircle size={32} className="text-[#C1432F]" />
         </div>
-        <h1 className="text-[36px] font-extrabold text-white mb-3 tracking-tight">
+        <h1 className="text-[26px] md:text-[32px] font-heading font-extrabold text-[#10201B] mb-2 tracking-tight">
           Category Not Found
         </h1>
-        <p className="max-w-md text-lavender-400 font-medium text-[15px] leading-relaxed mb-8">
-          The category you are looking for does not exist or an error occurred.
+        <p className="max-w-md text-[#6B7280] font-medium text-[14.5px] mb-6">
+          The editorial category you are looking for does not exist or may have moved.
         </p>
         <Link
           href="/categories"
-          className="bg-purple-500 hover:bg-purple-600 text-white font-bold text-[14px] px-8 py-4 rounded-full transition-colors shadow-[0_8px_20px_rgba(124,92,252,0.25)]"
+          className="bg-[#1C352D] hover:bg-[#10201B] text-[#FDFBF7] font-heading font-bold text-[13.5px] px-7 py-3 rounded-full transition-all shadow-xs"
         >
           Browse All Categories
         </Link>
@@ -90,143 +90,134 @@ export default async function BlogCategoryDetailsPage({ params }) {
   const pagination = data.blogs?.pagination || { hasNextPage: false };
   const rating = category.aggregateRating;
 
-  // Separation Logic
   const featuredIds = new Set(featuredBlogs.map((b) => String(b._id)));
   const uniqueFeed = rawFeed.filter((b) => !featuredIds.has(String(b._id)));
   const hasContent = featuredBlogs.length > 0 || uniqueFeed.length > 0;
 
   return (
-    <main className="min-h-screen bg-navy-800 font-sans pb-24 selection:bg-purple-500/30 selection:text-white">
-      {/* ── HERO SECTION ── */}
-      <section className="relative overflow-hidden bg-navy-900 border-b border-[var(--indigo-line)]">
-        {category.uiConfig?.heroBanner?.url && (
-          <Image
-            src={category.uiConfig.heroBanner.url}
-            alt={category.name}
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover opacity-10"
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-b from-navy-800/50 to-navy-900" />
+    <main className="min-h-screen bg-[#F8F0E5] font-sans pb-20 text-[#16241F]">
+      
+      {/* ── BREADCRUMB ── */}
+      <nav aria-label="Breadcrumb" className="bg-[#FFFFFF] border-b border-[#E2D9CC] py-3">
+        <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2 text-[11.5px] font-mono text-[#8A8F8C]">
+          <Link href="/" className="hover:text-[#1C352D] transition-colors">Home</Link>
+          <ChevronRight size={12} className="text-[#BDD6C4]" />
+          <Link href="/blogs" className="hover:text-[#1C352D] transition-colors">Editorial</Link>
+          <ChevronRight size={12} className="text-[#BDD6C4]" />
+          <span className="text-[#1C352D] font-bold truncate">{category.name}</span>
+        </div>
+      </nav>
 
-        <div className="relative z-10 max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32 text-center">
-          {/* Breadcrumb */}
-          <nav className="flex items-center justify-center gap-2 text-[11px] font-bold tracking-[0.1em] text-lavender-500 mb-8 uppercase">
-            <Link href="/" className="hover:text-purple-400 transition-colors">
-              Home
-            </Link>{" "}
-            <ChevronRight size={12} />
-            <Link
-              href="/blogs"
-              className="hover:text-purple-400 transition-colors"
-            >
-              Editorial
-            </Link>{" "}
-            <ChevronRight size={12} />
-            <span className="text-white">{category.name}</span>
-          </nav>
-
-          <h1 className="text-[44px] md:text-[64px] lg:text-[72px] font-extrabold text-white leading-[1.05] mb-6 max-w-4xl mx-auto tracking-tight">
-            {category.uiConfig?.heroHeadline || category.name}
-          </h1>
-
-          {(category.uiConfig?.heroSubtitle || category.shortDescription) && (
-            <p className="text-lavender-300 text-[16px] md:text-[18px] leading-relaxed max-w-2xl mx-auto mb-10">
-              {category.uiConfig?.heroSubtitle || category.shortDescription}
-            </p>
-          )}
-
-          {/* Stats Strip */}
-          <div className="inline-flex items-center gap-6 bg-navy-700/50 border border-[var(--indigo-line)] rounded-full px-6 py-3 backdrop-blur-sm">
-            {pagination.totalItems != null && (
-              <div className="flex items-center gap-2 text-lavender-400 text-[12px]">
-                <BookOpen size={14} className="text-purple-400" />{" "}
-                <strong className="text-white">{pagination.totalItems}</strong>{" "}
-                Articles
+      {/* ── MINIMAL FOCUSED HERO SECTION ── */}
+      <section className="w-full bg-[#FFFFFF] border-b border-[#E2D9CC] py-10 sm:py-12">
+        <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            
+            {/* Title & Description */}
+            <div className="max-w-3xl">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EBF3EE] border border-[#BDD6C4] text-[10.5px] font-heading font-extrabold uppercase tracking-widest text-[#1C352D] mb-3">
+                <FolderOpen size={12} className="text-[#D9A441]" />
+                <span>Editorial Category</span>
               </div>
-            )}
-            {hierarchy?.childCategories?.length > 0 && (
-              <>
-                <span className="w-px h-4 bg-[var(--indigo-line)]" />
-                <div className="flex items-center gap-2 text-lavender-400 text-[12px]">
-                  <Layers size={14} className="text-purple-400" />{" "}
-                  <strong className="text-white">
-                    {hierarchy.childCategories.length}
-                  </strong>{" "}
-                  Sub-topics
+
+              <h1 className="text-[32px] sm:text-[42px] lg:text-[46px] font-heading font-extrabold text-[#10201B] tracking-tight leading-[1.1] mb-3">
+                {category.uiConfig?.heroHeadline || category.name}
+              </h1>
+
+              {(category.uiConfig?.heroSubtitle || category.shortDescription) && (
+                <p className="text-[#6B7280] text-[14.5px] sm:text-[16px] leading-relaxed font-normal">
+                  {category.uiConfig?.heroSubtitle || category.shortDescription}
+                </p>
+              )}
+            </div>
+
+            {/* Compact Metric Badges */}
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              {pagination.totalItems != null && (
+                <div className="flex items-center gap-1.5 bg-[#F8F0E5] border border-[#E2D9CC] px-3.5 py-1.5 rounded-xl text-[#1C352D] text-[12px] font-mono font-semibold shadow-2xs">
+                  <BookOpen size={14} className="text-[#D9A441]" />
+                  <span><strong>{pagination.totalItems}</strong> Articles</span>
                 </div>
-              </>
-            )}
-            {rating?.count > 0 && (
-              <>
-                <span className="w-px h-4 bg-[var(--indigo-line)]" />
-                <div className="flex items-center gap-2 text-lavender-400 text-[12px]">
-                  <Star size={14} className="text-yellow-400 fill-yellow-400" />{" "}
-                  <strong className="text-white">
-                    {rating.average?.toFixed(1)}
-                  </strong>
+              )}
+
+              {hierarchy?.childCategories?.length > 0 && (
+                <div className="flex items-center gap-1.5 bg-[#F8F0E5] border border-[#E2D9CC] px-3.5 py-1.5 rounded-xl text-[#1C352D] text-[12px] font-mono font-semibold shadow-2xs">
+                  <Layers size={14} className="text-[#D9A441]" />
+                  <span><strong>{hierarchy.childCategories.length}</strong> Topics</span>
                 </div>
-              </>
-            )}
+              )}
+
+              {rating?.count > 0 && (
+                <div className="flex items-center gap-1.5 bg-[#F8F0E5] border border-[#E2D9CC] px-3.5 py-1.5 rounded-xl text-[#1C352D] text-[12px] font-mono font-semibold shadow-2xs">
+                  <Star size={14} className="text-[#D9A441] fill-[#D9A441]" />
+                  <span><strong>{rating.average?.toFixed(1)}</strong> Rating</span>
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
       </section>
 
-      {/* ── SUBCATEGORY PILLS ── */}
+      {/* ── SUBCATEGORY PILLS (OPTIONAL TOPICS BAR) ── */}
       {hierarchy?.childCategories?.length > 0 && (
-        <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 mt-10">
-          <div className="flex flex-wrap justify-center gap-3">
+        <section className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+          <div className="flex items-center gap-2 mb-2.5 text-[11px] font-mono font-bold uppercase text-[#8A8F8C] tracking-wider">
+            <Compass size={13} className="text-[#D9A441]" />
+            <span>Explore Sub-Topics</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
             {hierarchy.childCategories.map((child) => (
               <Link
                 key={child._id}
                 href={`/categories/${child.slug}`}
-                className="flex items-center gap-2 rounded-full border border-[var(--indigo-line)] bg-navy-700 px-5 py-2.5 text-[13px] font-bold text-lavender-300 hover:border-purple-500 hover:bg-purple-500 hover:text-white transition-all duration-300 shadow-sm"
+                className="flex items-center gap-1.5 rounded-full border border-[#E2D9CC] bg-[#FFFFFF] px-4 py-1.5 text-[12px] font-heading font-semibold text-[#1C352D] hover:border-[#1C352D] hover:bg-[#EBF3EE] transition-all shadow-2xs"
               >
-                <Layers size={14} /> {child.name}
+                <Layers size={12} className="text-[#D9A441]" />
+                <span>{child.name}</span>
               </Link>
             ))}
           </div>
         </section>
       )}
 
-      {/* ── MAIN CONTENT ── */}
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col">
+      {/* ── MAIN CONTENT INFINITE FEED ── */}
+      <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col pt-8">
         {!hasContent ? (
-          <div className="rounded-[24px] border border-[var(--indigo-line)] bg-navy-600 px-8 py-24 text-center mt-12 shadow-sm">
-            <div className="w-16 h-16 rounded-full bg-navy-700 border border-[var(--indigo-line)] flex items-center justify-center mx-auto mb-5">
-              <BookOpen size={28} className="text-lavender-400" />
+          <div className="rounded-2xl border border-[#E2D9CC] bg-[#FFFFFF] px-6 py-16 text-center shadow-xs">
+            <div className="w-14 h-14 rounded-2xl bg-[#F8F0E5] border border-[#E2D9CC] flex items-center justify-center mx-auto mb-3 text-[#1C352D]">
+              <BookOpen size={22} />
             </div>
-            <h3 className="text-[28px] font-extrabold text-white mb-2 tracking-tight">
+            <h3 className="text-[18px] font-heading font-bold text-[#10201B] mb-1">
               No Content Yet
             </h3>
-            <p className="text-lavender-400 text-[15px] leading-relaxed max-w-sm mx-auto">
-              Our editorial team is crafting amazing articles for this category.
-              Check back soon!
+            <p className="text-[#6B7280] text-[13.5px] font-normal max-w-sm mx-auto leading-relaxed">
+              Our editorial team is crafting verified buying guides for this category. Check back shortly.
             </p>
           </div>
         ) : (
-          <CategoryInfiniteFeed
-            slug={slug}
-            initialBlogs={[...featuredBlogs, ...uniqueFeed]}
-            initialHasMore={pagination.hasNextPage}
-            featuredIds={[...featuredIds]}
-          />
+          <div>
+            <CategoryInfiniteFeed
+              slug={slug}
+              initialBlogs={[...featuredBlogs, ...uniqueFeed]}
+              initialHasMore={pagination.hasNextPage}
+              featuredIds={[...featuredIds]}
+            />
+          </div>
         )}
       </div>
 
-      {/* ── SEO DESCRIPTION ── */}
+      {/* ── SEO DESCRIPTIVE FOOTER BLOCK ── */}
       {category.description && (
-        <section className="mt-24 border-t border-[var(--indigo-line)] bg-navy-900">
-          <div className="max-w-[860px] mx-auto px-6 py-20">
-            <div className="flex items-center gap-3 mb-8">
-              <span className="block w-1.5 h-8 rounded-full bg-purple-500" />
-              <h2 className="text-[32px] font-extrabold text-white tracking-tight">
-                About {category.name}
+        <section className="mt-16 border-t border-[#E2D9CC] bg-[#FFFFFF]">
+          <div className="max-w-[960px] mx-auto px-4 sm:px-6 py-12">
+            <div className="flex items-center gap-2.5 mb-4">
+              <span className="block w-1.5 h-6 rounded-full bg-[#D9A441]" />
+              <h2 className="text-[20px] md:text-[22px] font-heading font-bold text-[#10201B]">
+                About {category.name} Guides
               </h2>
             </div>
-            <div className="space-y-6 text-[16px] leading-[1.85] text-lavender-400 font-medium">
+            <div className="space-y-3.5 text-[14px] leading-relaxed text-[#6B7280] font-normal prose max-w-none">
               {category.description
                 .split("\n")
                 .filter(Boolean)
@@ -237,6 +228,7 @@ export default async function BlogCategoryDetailsPage({ params }) {
           </div>
         </section>
       )}
+
     </main>
   );
 }

@@ -62,25 +62,25 @@ export default function Stats() {
   ];
 
   return (
-    <section className="relative w-full bg-[#10201B] py-20 lg:py-28 font-sans border-b border-[#25473C]/80 overflow-hidden">
+    <section className="relative w-full bg-[#F8F0E5] py-20 lg:py-28 font-sans border-b border-[#E2D9CC] overflow-hidden">
       <div className="max-w-[1360px] mx-auto px-6 sm:px-8 lg:px-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
           
           {/* ─── LEFT COLUMN: HEADLINE & ACTIONS ─── */}
           <div className="lg:col-span-5 flex flex-col justify-between self-stretch">
             <div>
-              <div className="inline-block text-[11.5px] font-mono font-bold tracking-[0.2em] !text-[#D9A441] uppercase mb-4">
+              <div className="inline-block text-[11.5px] font-mono font-bold tracking-[0.2em] !text-[#427867] uppercase mb-4">
                 [PLATFORM METRICS]
               </div>
 
-              <h2 className="text-[40px] sm:text-[50px] lg:text-[56px] font-heading font-normal tracking-tight !text-[#FDFBF7] leading-[1.08] mb-6">
+              <h2 className="text-[40px] sm:text-[50px] lg:text-[56px] font-heading font-normal tracking-tight !text-[#1C352D] leading-[1.08] mb-6">
                 Our Scale <br />
                 <span className="font-serif italic font-normal !text-[#D9A441]">
                   by the numbers
                 </span>
               </h2>
 
-              <p className="!text-[#D5E4D9] text-[15px] sm:text-[16px] leading-relaxed max-w-[420px] font-normal mb-8">
+              <p className="!text-[#16241F]/80 text-[15px] sm:text-[16px] leading-relaxed max-w-[420px] font-normal mb-8">
                 Our metrics are a testament to our dedication to transparency, verified savings, and delivering real value to everyday shoppers.
               </p>
             </div>
@@ -89,14 +89,14 @@ export default function Stats() {
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <Link
                 href="/stores"
-                className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-[#FDFBF7] !text-[#16241F] text-[13.5px] font-heading font-bold hover:bg-[#D9A441] hover:!text-[#16241F] transition-all duration-200 shadow-sm active:scale-98"
+                className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-[#1C352D] !text-[#FDFBF7] text-[13.5px] font-heading font-bold hover:bg-[#10201B] transition-all duration-200 shadow-sm active:scale-98"
               >
                 Explore Stores
               </Link>
               
               <Link
                 href="/legal/about"
-                className="inline-flex items-center justify-center gap-1.5 px-6 py-3 rounded-full border border-[#25473C] bg-[#162B24]/40 !text-[#FDFBF7] text-[13.5px] font-heading font-semibold hover:border-[#D9A441] hover:!text-[#D9A441] transition-all duration-200"
+                className="inline-flex items-center justify-center gap-1.5 px-6 py-3 rounded-full border border-[#E2D9CC] bg-[#FDFBF7] !text-[#1C352D] text-[13.5px] font-heading font-semibold hover:border-[#1C352D] hover:!text-[#1C352D] transition-all duration-200 shadow-xs"
               >
                 <span>How We Operate</span>
                 <ArrowUpRight size={14} strokeWidth={2.5} className="!text-[#D9A441]" />
@@ -104,7 +104,7 @@ export default function Stats() {
             </div>
           </div>
 
-          {/* ─── RIGHT COLUMN: 2x2 CLEAN METRICS GRID ─── */}
+          {/* ─── RIGHT COLUMN: 2x2 CLEAN METRICS GRID (Light Cream Theme) ─── */}
           <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2">
             {statsData.map((item, idx) => {
               const isTopRow = idx < 2;
@@ -113,30 +113,30 @@ export default function Stats() {
               return (
                 <div
                   key={item.id}
-                  className={`flex flex-col justify-between p-6 sm:p-8 transition-colors duration-200 hover:bg-[#162B24]/40 ${
-                    isLeftCol ? "border-l-0 sm:border-r border-[#25473C]" : ""
+                  className={`flex flex-col justify-between p-6 sm:p-8 transition-colors duration-200 hover:bg-[#FDFBF7]/70 ${
+                    isLeftCol ? "border-l-0 sm:border-r border-[#E2D9CC]" : ""
                   } ${
-                    isTopRow ? "border-b border-[#25473C]" : ""
+                    isTopRow ? "border-b border-[#E2D9CC]" : ""
                   }`}
                 >
                   {/* Top Label */}
-                  <span className="text-[13px] font-heading font-semibold tracking-wide !text-[#A8C3B0] block mb-4">
+                  <span className="text-[13px] font-heading font-semibold tracking-wide !text-[#427867] block mb-4">
                     {item.label}
                   </span>
 
                   {/* Big Hero Metric */}
                   <div className="my-2">
                     {loading ? (
-                      <div className="h-[60px] w-36 bg-[#162B24] animate-pulse rounded-lg mb-2" />
+                      <div className="h-[60px] w-36 bg-[#E2D9CC]/60 animate-pulse rounded-lg mb-2" />
                     ) : (
-                      <div className="text-[44px] sm:text-[54px] lg:text-[62px] font-heading font-extrabold tracking-tight !text-[#FFFFFF] leading-none drop-shadow-sm">
+                      <div className="text-[44px] sm:text-[54px] lg:text-[62px] font-heading font-extrabold tracking-tight !text-[#1C352D] leading-none">
                         {item.value}
                       </div>
                     )}
                   </div>
 
                   {/* Bottom Subtext */}
-                  <p className="text-[13px] sm:text-[13.5px] !text-[#D5E4D9] leading-relaxed font-normal mt-4">
+                  <p className="text-[13px] sm:text-[13.5px] !text-[#16241F]/75 leading-relaxed font-normal mt-4">
                     {item.description}
                   </p>
                 </div>

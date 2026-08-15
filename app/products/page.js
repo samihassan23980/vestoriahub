@@ -9,6 +9,11 @@ import {
   Store,
   LayoutGrid,
   AlertCircle,
+  Sparkles,
+  ShieldCheck,
+  Tag,
+  ArrowUpRight,
+  CheckCircle2,
 } from "lucide-react";
 import Swal from "sweetalert2";
 
@@ -60,12 +65,14 @@ const Products = () => {
       Swal.fire({
         icon: "error",
         title: "Connection Error",
-        text: "We couldn't load the products right now. Please try again.",
-        confirmButtonColor: "var(--purple-500)",
-        background: "var(--navy-800)",
-        color: "var(--white)",
+        text: "We couldn't load the curated deals right now. Please try again.",
+        confirmButtonColor: "#1C352D",
+        background: "#FFFFFF",
+        color: "#16241F",
+        iconColor: "#C1432F",
         customClass: {
-          confirmButton: "rounded-lg font-bold px-6 py-2",
+          popup: "rounded-2xl border border-[#E2D9CC] shadow-xl",
+          confirmButton: "rounded-xl font-bold px-6 py-2.5 !text-[#FDFBF7]",
         },
       });
     } finally {
@@ -85,43 +92,89 @@ const Products = () => {
   };
 
   return (
-    <section className="bg-navy-900 min-h-screen py-[60px] md:py-[80px]">
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6 border-b border-[var(--indigo-line)] pb-8">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-purple-500/15 text-purple-300 border border-purple-500/30 text-[12px] font-bold uppercase tracking-wider mb-4 shadow-sm">
-              <LayoutGrid size={14} strokeWidth={2.5} />
-              Complete Catalog
-            </div>
-
-            <h1 className="text-white font-bold text-[36px] md:text-[48px] leading-[1.1] tracking-tight mb-4">
-              Explore All Deals & Products
-            </h1>
-            <p className="text-lavender-400 text-[16px] md:text-[18px] leading-relaxed">
-              Browse our fully verified collection of premium products, flash
-              sales, and exclusive discounts from top-rated stores globally.
-            </p>
-          </div>
-
-          <div className="text-lavender-400 font-medium text-[14px]">
-            Showing all verified deals
-          </div>
+    <div className="bg-[#F8F0E5] min-h-screen font-sans pb-24">
+      {/* ── HERO SECTION WITH S-WAVE ACCENT ── */}
+      <section className="relative bg-[#10201B] overflow-hidden border-b border-[#25473C] text-[#FDFBF7] py-16 md:py-24">
+        {/* Background S-Wave Flow */}
+        <div className="absolute top-1/2 left-0 w-[200vw] lg:w-full h-[320px] -translate-y-1/2 pointer-events-none z-0 opacity-20">
+          <svg viewBox="0 0 1440 300" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full text-[#A8C3B0]">
+            <path
+              d="M-100 150 C 300 350, 600 -50, 1000 150 C 1300 300, 1600 50, 1800 150"
+              stroke="currentColor"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+            />
+            <path
+              d="M-100 170 C 300 370, 600 -30, 1000 170 C 1300 320, 1600 70, 1800 170"
+              stroke="#D9A441"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeDasharray="6 8"
+              className="opacity-60"
+            />
+          </svg>
         </div>
 
-        {/* Product Grid */}
+        {/* Ambient Glows */}
+        <div className="absolute top-0 right-10 w-[450px] h-[450px] bg-[#D9A441]/10 rounded-full blur-[140px] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[380px] h-[380px] bg-[#1C352D] rounded-full blur-[120px] pointer-events-none" />
+
+        <div className="relative max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 z-10 text-center flex flex-col items-center">
+          <div className="inline-flex items-center gap-2 bg-[#162B24] text-[#D9A441] border border-[#25473C] text-[11px] font-heading font-extrabold uppercase tracking-widest px-4 py-1.5 rounded-full mb-5 shadow-xs">
+            <Sparkles size={13} />
+            <span>Curated Marketplace Catalog</span>
+          </div>
+
+          <h1 className="text-[#FDFBF7] text-[34px] sm:text-[46px] md:text-[54px] font-heading font-black tracking-tight leading-[1.08] mb-4">
+            Curated Deals & <br className="hidden sm:inline" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D9A441] via-[#F8F0E5] to-[#D9A441]">
+              Verified Product Drops.
+            </span>
+          </h1>
+
+          <p className="text-[#D5E4D9] text-[15px] md:text-[16.5px] max-w-[620px] mx-auto leading-relaxed font-normal mb-8">
+            Explore strictly vetted products, verified flash sales, and price drops from premier merchant partners globally. Tested daily to ensure real savings.
+          </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-4 text-[12px] font-mono text-[#A8C3B0]">
+            <span className="inline-flex items-center gap-1.5 bg-[#162B24] border border-[#25473C] px-3.5 py-1.5 rounded-full">
+              <ShieldCheck size={14} className="text-[#34D399]" /> 100% Tested Prices
+            </span>
+            <span className="inline-flex items-center gap-1.5 bg-[#162B24] border border-[#25473C] px-3.5 py-1.5 rounded-full">
+              <Tag size={14} className="text-[#D9A441]" /> Direct Partner Links
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* ── PRODUCTS GRID CONTAINER ── */}
+      <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 pt-12">
+        {/* Results Header Bar */}
+        <div className="flex items-center justify-between mb-8 pb-4 border-b border-[#E2D9CC]">
+          <div className="flex items-center gap-2">
+            <LayoutGrid size={18} className="text-[#D9A441]" />
+            <h2 className="text-[18px] sm:text-[20px] font-heading font-extrabold text-[#10201B] tracking-tight uppercase">
+              All Verified Drops
+            </h2>
+          </div>
+          <span className="text-[12px] font-mono font-bold text-[#8A8F8C] bg-[#FFFFFF] border border-[#E2D9CC] px-3 py-1 rounded-full uppercase">
+            Showing Live Deals
+          </span>
+        </div>
+
+        {/* Product Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {/* Skeleton Loaders */}
           {loading &&
             [1, 2, 3, 4, 5, 6, 7, 8].map((skeleton) => (
               <div key={`skeleton-${skeleton}`} className="w-full">
-                <div className="bg-navy-800 h-[460px] rounded-2xl border border-[var(--indigo-line)] overflow-hidden flex flex-col shadow-sm">
-                  <div className="aspect-square bg-gradient-to-r from-navy-700 to-navy-600 animate-pulse" />
-                  <div className="p-5 flex-grow flex flex-col gap-3">
-                    <div className="h-3 bg-navy-700 rounded w-1/3 animate-pulse" />
-                    <div className="h-5 bg-navy-700 rounded w-full animate-pulse" />
-                    <div className="h-5 bg-navy-700 rounded w-2/3 animate-pulse" />
-                    <div className="mt-auto h-11 bg-navy-700 rounded-xl animate-pulse" />
+                <div className="bg-[#FFFFFF] h-[460px] rounded-[24px] border-2 border-[#E2D9CC] overflow-hidden flex flex-col p-4 shadow-xs">
+                  <div className="aspect-square bg-[#F1E7D8] rounded-[18px] animate-pulse mb-4" />
+                  <div className="flex-grow flex flex-col gap-3">
+                    <div className="h-3.5 bg-[#E2D9CC] rounded-full w-1/3 animate-pulse" />
+                    <div className="h-5 bg-[#E2D9CC] rounded-lg w-full animate-pulse" />
+                    <div className="h-5 bg-[#E2D9CC] rounded-lg w-2/3 animate-pulse" />
+                    <div className="mt-auto h-11 bg-[#E2D9CC] rounded-xl animate-pulse" />
                   </div>
                 </div>
               </div>
@@ -136,15 +189,16 @@ const Products = () => {
               const pdpUrl = `/products/${product.slug}`;
 
               return (
-                <div key={product._id} className="w-full">
-                  <div className="bg-navy-800 h-full flex flex-col rounded-2xl border border-[var(--indigo-line)] shadow-[0_4px_20px_rgba(6,7,19,0.3)] overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(124,92,252,0.25)] hover:border-purple-500 hover:-translate-y-1 group">
-                    {/* Image Container (Aspect Square + Contain for Portrait & Variable Ratio Images) */}
+                <div key={product._id} className="w-full h-full">
+                  <article className="bg-[#FFFFFF] h-full flex flex-col rounded-[24px] border-2 border-[#E2D9CC] hover:border-[#BDD6C4] shadow-xs hover:shadow-[0_16px_36px_rgba(28,53,45,0.09)] overflow-hidden transition-all duration-300 hover:-translate-y-1 p-4 group">
+                    
+                    {/* Image Container (Aspect Square + Contain) */}
                     <Link
                       href={pdpUrl}
-                      className="aspect-square w-full overflow-hidden relative bg-navy-950 block p-4"
+                      className="aspect-square w-full overflow-hidden relative bg-[#FDFBF7] rounded-[18px] border border-[#E2D9CC] block p-4 mb-4 shrink-0"
                     >
                       {product.discountPercentage > 0 && (
-                        <div className="absolute top-3 left-3 bg-purple-600 text-white text-[11px] font-extrabold px-2.5 py-1 rounded-md z-10 shadow-md uppercase tracking-wide">
+                        <div className="absolute top-3 left-3 bg-[#D9A441] text-[#16241F] text-[10.5px] font-heading font-black px-2.5 py-1 rounded-full z-10 shadow-xs uppercase tracking-wider">
                           {product.discountPercentage}% OFF
                         </div>
                       )}
@@ -162,62 +216,62 @@ const Products = () => {
                     </Link>
 
                     {/* Content Container */}
-                    <div className="p-5 flex flex-col flex-grow bg-navy-800">
-                      {/* Store / Brand */}
-                      <div className="flex items-center gap-1.5 text-lavender-400 font-semibold text-[11px] uppercase tracking-wider mb-2.5">
-                        <Store size={14} className="text-purple-400" />
-                        <span className="truncate">
-                          {product.brandName ||
-                            product.storeId?.name ||
-                            "Premium Store"}
-                        </span>
-                      </div>
-
-                      {/* Product Title */}
-                      <Link href={pdpUrl} className="block">
-                        <h3
-                          className="text-white font-bold text-[16px] leading-[1.35] mb-3 line-clamp-2 hover:text-purple-400 transition-colors"
-                          title={product.title}
-                        >
-                          {product.title}
-                        </h3>
-                      </Link>
-
-                      {/* Rating Stars */}
-                      <div className="flex items-center gap-1.5 mb-4">
-                        <div className="flex items-center text-amber-400">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star
-                              key={star}
-                              size={14}
-                              fill={
-                                star <= (product.rating || 5)
-                                  ? "currentColor"
-                                  : "transparent"
-                              }
-                              strokeWidth={star <= (product.rating || 5) ? 0 : 1}
-                              className={
-                                star <= (product.rating || 5) ? "" : "opacity-30"
-                              }
-                            />
-                          ))}
+                    <div className="flex flex-col flex-grow justify-between">
+                      <div>
+                        {/* Store / Brand */}
+                        <div className="flex items-center gap-1.5 text-[#8A8F8C] font-mono font-bold text-[11px] uppercase tracking-wider mb-2">
+                          <Store size={13} className="text-[#D9A441]" />
+                          <span className="truncate">
+                            {product.brandName ||
+                              product.storeId?.name ||
+                              "Partner Store"}
+                          </span>
                         </div>
-                        <span className="text-lavender-400 text-[12px] font-medium">
-                          ({product.reviewCount || 0})
-                        </span>
-                      </div>
 
-                      <div className="mt-auto"></div>
+                        {/* Product Title */}
+                        <Link href={pdpUrl} className="block">
+                          <h3
+                            className="text-[#10201B] font-heading font-bold text-[16px] leading-[1.3] mb-2.5 line-clamp-2 group-hover:text-[#D9A441] transition-colors"
+                            title={product.title}
+                          >
+                            {product.title}
+                          </h3>
+                        </Link>
+
+                        {/* Rating Stars */}
+                        <div className="flex items-center gap-1.5 mb-4">
+                          <div className="flex items-center text-[#D9A441]">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                size={13}
+                                fill={
+                                  star <= (product.rating || 5)
+                                    ? "currentColor"
+                                    : "transparent"
+                                }
+                                strokeWidth={star <= (product.rating || 5) ? 0 : 1}
+                                className={
+                                  star <= (product.rating || 5) ? "" : "opacity-30"
+                                }
+                              />
+                            ))}
+                          </div>
+                          <span className="text-[#6B7280] text-[11.5px] font-mono font-semibold">
+                            ({product.reviewCount || 0})
+                          </span>
+                        </div>
+                      </div>
 
                       {/* Pricing & Outbound Affiliate CTA */}
-                      <div className="pt-4 border-t border-[var(--indigo-line)] mt-2 flex flex-col gap-4">
-                        <div className="flex flex-wrap items-baseline gap-2.5">
-                          <span className="text-white font-black text-[20px] md:text-[22px]">
+                      <div className="pt-3.5 border-t border-[#E2D9CC] mt-auto flex flex-col gap-3.5">
+                        <div className="flex flex-wrap items-baseline gap-2">
+                          <span className="text-[#10201B] font-heading font-black text-[20px] leading-none">
                             {product.currency === "USD" ? "$" : ""}
                             {Number(product.price || 0).toFixed(2)}
                           </span>
                           {product.originalPrice && (
-                            <span className="text-lavender-500 text-[13px] md:text-[14px] font-medium line-through decoration-1">
+                            <span className="text-[#8A8F8C] text-[13px] font-mono font-medium line-through">
                               {product.currency === "USD" ? "$" : ""}
                               {Number(product.originalPrice).toFixed(2)}
                             </span>
@@ -228,17 +282,17 @@ const Products = () => {
                           href={product.affiliateLink}
                           target="_blank"
                           rel="sponsored nofollow noopener"
-                          className="w-full flex items-center justify-center gap-2 bg-purple-500/15 hover:bg-purple-500 text-purple-300 hover:text-white py-3 rounded-xl font-bold text-[14px] transition-all duration-200 ease-out border border-purple-500/30 hover:border-purple-500 group/btn"
+                          className="w-full flex items-center justify-center gap-1.5 bg-[#EBF3EE] hover:bg-[#1C352D] text-[#1C352D] hover:text-[#FDFBF7] py-2.5 rounded-xl font-heading font-bold text-[13px] transition-all duration-200 border border-[#BDD6C4] hover:border-[#1C352D] group/btn shadow-2xs"
                         >
-                          {product.ctaText || "View Deal"}
+                          <span>{product.ctaText || "View Deal"}</span>
                           <ExternalLink
-                            size={16}
-                            className="text-purple-400 group-hover/btn:text-white transition-colors"
+                            size={14}
+                            className="text-[#D9A441] transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5"
                           />
                         </a>
                       </div>
                     </div>
-                  </div>
+                  </article>
                 </div>
               );
             })}
@@ -246,14 +300,15 @@ const Products = () => {
 
         {/* Empty State */}
         {!loading && products.length === 0 && (
-          <div className="w-full py-16 flex flex-col items-center justify-center text-center bg-navy-800 rounded-2xl border border-[var(--indigo-line)] mt-6">
-            <AlertCircle size={48} className="text-lavender-500 mb-4" />
-            <h3 className="text-white font-bold text-[22px] mb-2">
+          <div className="w-full py-16 flex flex-col items-center justify-center text-center bg-[#FFFFFF] rounded-[24px] border border-[#E2D9CC] shadow-xs mt-6">
+            <div className="w-14 h-14 rounded-2xl bg-[#F8F0E5] border border-[#E2D9CC] flex items-center justify-center mb-4 text-[#C1432F]">
+              <AlertCircle size={28} />
+            </div>
+            <h3 className="text-[#10201B] font-heading font-bold text-[20px] mb-2">
               No products found
             </h3>
-            <p className="text-lavender-400 max-w-md">
-              We couldn't find any products at the moment. Please check back
-              later or browse our categories.
+            <p className="text-[#6B7280] text-[14px] max-w-md">
+              We couldn&apos;t find any active deals in this catalog. Please check back later or explore our stores.
             </p>
           </div>
         )}
@@ -264,16 +319,16 @@ const Products = () => {
             <button
               onClick={handleLoadMore}
               disabled={loadingMore}
-              className={`flex items-center justify-center gap-2 px-8 py-3.5 rounded-full font-bold text-[15px] transition-all duration-200 ${
+              className={`flex items-center justify-center gap-2 px-8 py-3.5 rounded-full font-heading font-bold text-[14px] transition-all duration-200 shadow-xs ${
                 loadingMore
-                  ? "bg-navy-800 text-lavender-500 border border-[var(--indigo-line)] cursor-wait"
-                  : "bg-navy-800 border-2 border-purple-500 text-purple-300 hover:bg-purple-500 hover:text-white"
+                  ? "bg-[#FFFFFF] text-[#8A8F8C] border border-[#E2D9CC] cursor-wait"
+                  : "bg-[#1C352D] hover:bg-[#10201B] text-[#FDFBF7] active:scale-98"
               }`}
             >
               {loadingMore ? (
                 <>
-                  <span className="w-5 h-5 border-2 border-purple-400 border-t-transparent rounded-full animate-spin"></span>
-                  Loading...
+                  <span className="w-4 h-4 border-2 border-[#D9A441] border-t-transparent rounded-full animate-spin"></span>
+                  <span>Loading Deals...</span>
                 </>
               ) : (
                 "Load More Products"
@@ -282,7 +337,7 @@ const Products = () => {
           </div>
         )}
       </div>
-    </section>
+    </div>
   );
 };
 

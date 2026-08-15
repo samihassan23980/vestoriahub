@@ -12,7 +12,6 @@ import {
   ShieldCheck,
   Sparkles,
   ArrowRight,
-  TrendingUp,
   ListChecks,
 } from "lucide-react";
 import BlogArticleClient, {
@@ -34,7 +33,7 @@ async function getBlogData(slug) {
     const res = await fetch(`${baseUrl}/api/public/blogs/${slug}`, {
       next: { 
         revalidate: 3600,
-        tags: ["blogs", `blog-${slug}`] // 🔥 Tag base cache added here
+        tags: ["blogs", `blog-${slug}`]
       },
     });
 
@@ -55,16 +54,16 @@ export async function generateMetadata({ params }) {
 
   if (!article) {
     return {
-      title: "Article Not Found | BUYMETHIS",
-      description: "This BUYMETHIS article could not be found.",
+      title: "Article Not Found | VestoriaHub",
+      description: "This VestoriaHub article could not be found.",
     };
   }
 
-  const title = article.seo?.metaTitle || `${article.title} | BUYMETHIS`;
+  const title = article.seo?.metaTitle || `${article.title} | VestoriaHub`;
   const description =
     article.seo?.metaDescription ||
     article.excerpt ||
-    "Read expert buying guides, deal insights, and smarter shopping advice from BUYMETHIS.";
+    "Read expert buying guides, verified coupon insights, and smarter shopping advice from VestoriaHub.";
 
   return {
     title,
@@ -208,79 +207,64 @@ function buildArticleWithToc(article) {
 
 function ErrorState({ message }) {
   return (
-    <main className="flex min-h-[70vh] flex-col items-center justify-center bg-background px-4 text-center sm:px-6">
-      {/* danger state styling using standard tailwind reds since danger wasn't mapped in your inline configuration */}
-      <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-red-500/10">
-        <AlertCircle size={36} className="text-red-500" />
+    <main className="flex min-h-[70vh] flex-col items-center justify-center bg-[#F8F0E5] px-4 text-center sm:px-6">
+      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#FFFFFF] border border-[#E2D9CC] shadow-xs">
+        <AlertCircle size={32} className="text-[#C1432F]" />
       </div>
 
-      <h2 className="text-[1.5rem] font-bold leading-[1.25] text-text-primary sm:text-[1.75rem] lg:text-[2rem] xl:text-[2.25rem]">
+      <h2 className="text-[1.5rem] font-heading font-extrabold text-[#10201B] tracking-tight">
         Article Not Found
       </h2>
 
-      <p className="mt-3 max-w-sm text-[0.9375rem] leading-[1.7] text-text-secondary sm:text-base">
-        {message || "This article could not be found or has been removed."}
+      <p className="mt-2.5 max-w-sm text-[14.5px] leading-relaxed text-[#6B7280]">
+        {message || "This specific article could not be found or has been updated."}
       </p>
 
       <Link
         href="/blogs"
-        className="mt-8 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(124,92,252,0.24)] transition-all duration-200 hover:bg-primary-hover sm:px-5 sm:py-3 lg:text-[0.9375rem]"
+        className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#1C352D] hover:bg-[#10201B] px-6 py-2.5 text-sm font-heading font-bold text-[#FDFBF7] shadow-xs transition-all"
       >
-        <ArrowLeft size={15} />
-        Return to Articles
+        <ArrowLeft size={15} className="text-[#FDFBF7]" />
+        <span className="text-[#FDFBF7]">Return to Editorial Feed</span>
       </Link>
     </main>
   );
 }
 
-const MetaPill = ({ icon: Icon, children, green = false }) => (
-  <span
-    className={cx(
-      "inline-flex items-center gap-1.5 text-[0.8125rem] font-normal leading-[1.5] sm:text-sm",
-      green ? "text-green-400" : "text-white/70",
-    )}
-  >
-    <Icon size={14} className={green ? "" : "text-secondary"} />
-    {children}
-  </span>
-);
-
 const SidebarTableOfContents = ({ items }) => {
   if (!items.length) return null;
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-5 shadow-card lg:rounded-[14px]">
-      <div className="mb-4 flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-background text-secondary">
-          <ListChecks size={18} />
+    <div className="rounded-[22px] border border-[#E2D9CC] bg-[#FFFFFF] p-5 shadow-xs">
+      <div className="mb-4 flex items-center gap-2.5">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#EBF3EE] border border-[#BDD6C4] text-[#1C352D]">
+          <ListChecks size={16} />
         </span>
 
         <div>
-          <span className="text-[10px] font-semibold uppercase tracking-[0.04em] text-secondary sm:text-[11px]">
-            Quick Jump
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#8A8F8C] block">
+            Navigation
           </span>
-
-          <h3 className="text-[0.9375rem] font-semibold leading-[1.4] text-text-primary sm:text-[1rem] lg:text-[1.0625rem]">
+          <h3 className="text-[14px] font-heading font-bold text-[#10201B] leading-none">
             Table of Contents
           </h3>
         </div>
       </div>
 
-      <nav className="grid gap-2">
+      <nav className="grid gap-1">
         {items.map((item, index) => (
           <a
             key={`${item.id}-${index}`}
             href={`#${item.id}`}
             className={cx(
-              "group flex items-start gap-3 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-all duration-200 hover:bg-background hover:text-secondary",
-              item.level === 3 && "pl-8",
+              "group flex items-start gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-[#6B7280] transition-colors hover:bg-[#FDFBF7] hover:text-[#10201B]",
+              item.level === 3 && "pl-6 text-[12.5px]",
             )}
           >
-            <span className="font-mono text-[0.8125rem] font-bold tracking-wider text-secondary">
+            <span className="font-mono text-[11px] font-bold text-[#D9A441] shrink-0 mt-0.5">
               {String(index + 1).padStart(2, "0")}
             </span>
-
-            <span className="line-clamp-2">{item.title}</span>
+            <span className="line-clamp-2 leading-snug">{item.title}</span>
           </a>
         ))}
       </nav>
@@ -292,41 +276,29 @@ const MobileTableOfContents = ({ items }) => {
   if (!items.length) return null;
 
   return (
-    <section className="mx-auto w-full max-w-[1280px] px-4 pt-8 sm:px-6 lg:hidden">
-      <div className="rounded-xl border border-border bg-surface p-4 shadow-card sm:p-5">
-        <div className="mb-4 flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-background text-secondary">
-            <ListChecks size={20} />
+    <section className="mx-auto w-full max-w-[1360px] px-4 sm:px-6 lg:hidden pt-6">
+      <div className="rounded-2xl border border-[#E2D9CC] bg-[#FFFFFF] p-4 shadow-xs">
+        <div className="mb-3 flex items-center gap-2.5">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#EBF3EE] text-[#1C352D]">
+            <ListChecks size={16} />
           </span>
-
-          <div>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.04em] text-secondary sm:text-[11px]">
-              Article Navigation
-            </span>
-
-            <h2 className="text-[0.9375rem] font-semibold leading-[1.4] text-text-primary sm:text-[1rem]">
-              Table of Contents
-            </h2>
-          </div>
+          <h2 className="text-[14px] font-heading font-bold text-[#10201B]">
+            Table of Contents
+          </h2>
         </div>
 
-        <nav className="grid gap-2 sm:grid-cols-2">
+        <nav className="grid gap-1.5 sm:grid-cols-2">
           {items.map((item, index) => (
             <a
               key={`mobile-${item.id}-${index}`}
               href={`#${item.id}`}
-              className="group flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2.5 text-sm font-medium text-text-primary transition-all duration-200 hover:border-secondary hover:bg-surface-alt hover:text-secondary"
+              className="group flex items-center gap-2 rounded-lg border border-[#E2D9CC] bg-[#FDFBF7] px-3 py-2 text-[12.5px] font-medium text-[#16241F] transition-colors hover:border-[#BDD6C4] hover:bg-[#EBF3EE]"
             >
-              <span className="font-mono text-[0.8125rem] font-bold tracking-wider text-secondary">
+              <span className="font-mono text-[10.5px] font-bold text-[#D9A441]">
                 {String(index + 1).padStart(2, "0")}
               </span>
-
-              <span className="line-clamp-1">{item.title}</span>
-
-              <ChevronRight
-                size={14}
-                className="ml-auto shrink-0 transition-transform duration-200 group-hover:translate-x-0.5"
-              />
+              <span className="line-clamp-1 flex-1">{item.title}</span>
+              <ChevronRight size={13} className="text-[#8A8F8C]" />
             </a>
           ))}
         </nav>
@@ -338,47 +310,44 @@ const MobileTableOfContents = ({ items }) => {
 const RelatedPostCard = ({ post }) => (
   <Link
     href={`/blogs/${post.slug}`}
-    className="group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-card transition-all duration-200 ease-out hover:-translate-y-1 hover:border-secondary hover:shadow-card-hover"
+    className="group flex h-full flex-col overflow-hidden rounded-[22px] border-2 border-[#E2D9CC] hover:border-[#BDD6C4] bg-[#FFFFFF] shadow-xs transition-all duration-300 hover:-translate-y-1 p-4"
   >
-    <div className="relative aspect-video w-full overflow-hidden bg-background">
+    <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[16px] bg-[#F1E7D8] border border-[#E2D9CC] mb-3.5">
       <Image
         src={post.featuredImage?.url || fallbackImage}
         alt={post.featuredImage?.alt || post.title}
         fill
         loading="lazy"
         sizes="(max-width: 640px) 100vw, 33vw"
-        className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+        className="object-cover transition-transform duration-700 group-hover:scale-105"
       />
-
-      <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/60 to-transparent" />
-
-      <div className="absolute left-4 top-4">
-        <span className="inline-flex rounded-md border border-secondary/40 bg-background/90 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-secondary backdrop-blur sm:text-[11px]">
-          {post.category?.name || "Article"}
+      <div className="absolute top-2.5 left-2.5">
+        <span className="inline-flex rounded-full bg-[#10201B]/90 backdrop-blur-md px-2.5 py-0.5 text-[9.5px] font-heading font-extrabold uppercase tracking-wider text-[#D9A441] border border-[#25473C]">
+          {post.category?.name || "Insight"}
         </span>
       </div>
     </div>
 
-    <div className="flex flex-grow flex-col p-4 sm:p-5">
-      <h3 className="line-clamp-2 text-[1.125rem] font-semibold leading-[1.3] text-text-primary transition-colors group-hover:text-secondary sm:text-[1.25rem] lg:text-[1.375rem]">
-        {post.title}
-      </h3>
+    <div className="flex flex-grow flex-col justify-between">
+      <div>
+        <h3 className="line-clamp-2 text-[16px] font-heading font-bold text-[#10201B] leading-snug transition-colors group-hover:text-[#D9A441]">
+          {post.title}
+        </h3>
+        {post.excerpt && (
+          <p className="mt-2 line-clamp-2 text-[13px] font-normal leading-relaxed text-[#6B7280]">
+            {post.excerpt}
+          </p>
+        )}
+      </div>
 
-      {post.excerpt ? (
-        <p className="mt-3 line-clamp-2 text-[0.9375rem] leading-[1.7] text-text-secondary sm:line-clamp-3 sm:text-base">
-          {post.excerpt}
-        </p>
-      ) : null}
-
-      <div className="mt-auto flex items-center justify-between gap-4 border-t border-border pt-4">
-        <div className="flex items-center gap-2 text-[0.8125rem] leading-[1.5] text-text-secondary sm:text-sm">
-          <CalendarDays size={13} className="text-secondary" />
+      <div className="mt-4 flex items-center justify-between border-t border-[#E2D9CC] pt-3 text-[11px] font-mono text-[#8A8F8C]">
+        <span className="flex items-center gap-1">
+          <CalendarDays size={12} className="text-[#D9A441]" />
           {formatDate(post.publishedAt)}
-        </div>
-
+        </span>
         <ArrowRight
-          size={16}
-          className="text-secondary transition-transform duration-200 group-hover:translate-x-1"
+          size={14}
+          className="text-[#1C352D] transition-transform duration-200 group-hover:translate-x-1"
         />
       </div>
     </div>
@@ -412,11 +381,11 @@ export default async function BlogDetailPage({ params }) {
     dateModified: article.updatedAt || article.publishedAt || article.createdAt,
     author: {
       "@type": "Person",
-      name: article.author?.name || "BUYMETHIS Editorial Team",
+      name: article.author?.name || "VestoriaHub Editorial Desk",
     },
     publisher: {
       "@type": "Organization",
-      name: "BUYMETHIS",
+      name: "VestoriaHub",
     },
     mainEntityOfPage: {
       "@type": "WebPage",
@@ -425,266 +394,228 @@ export default async function BlogDetailPage({ params }) {
   };
 
   return (
-    <main className="min-h-screen bg-background text-text-primary selection:bg-primary selection:text-white">
+    <main className="min-h-screen bg-[#F8F0E5] text-[#16241F] font-sans antialiased pb-20">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <header className="relative overflow-hidden bg-background border-b border-border">
-        {article.featuredImage?.url ? (
-          <Image
-            src={article.featuredImage.url}
-            alt={article.featuredImage.alt || article.title}
-            fill
-            priority
-            fetchPriority="high"
-            sizes="100vw"
-            className="object-cover opacity-[0.14]"
-          />
-        ) : null}
+      {/* ── BREADCRUMB ── */}
+      <nav
+        aria-label="Breadcrumb"
+        className="bg-[#FFFFFF] border-b border-[#E2D9CC] py-3.5"
+      >
+        <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2 text-[11.5px] font-mono text-[#8A8F8C] overflow-x-auto whitespace-nowrap">
+          <Link href="/" className="text-[#8A8F8C] hover:text-[#1C352D] transition-colors">
+            Home
+          </Link>
+          <ChevronRight size={12} className="text-[#BDD6C4] shrink-0" />
+          <Link href="/blogs" className="text-[#8A8F8C] hover:text-[#1C352D] transition-colors">
+            Editorial
+          </Link>
+          <ChevronRight size={12} className="text-[#BDD6C4] shrink-0" />
 
-        <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/90 to-background" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_0%,rgba(124,92,252,0.15),transparent_32%),radial-gradient(circle_at_92%_22%,rgba(155,138,251,0.15),transparent_36%)]" />
+          {article.category?.slug && (
+            <>
+              <Link
+                href={`/categories/${article.category.slug}`}
+                className="text-[#1C352D] font-bold hover:text-[#D9A441] transition-colors"
+              >
+                {article.category.name}
+              </Link>
+              <ChevronRight size={12} className="text-[#BDD6C4] shrink-0" />
+            </>
+          )}
 
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
-          <nav
-            aria-label="Breadcrumb"
-            className="mb-8 flex flex-wrap items-center justify-center gap-2 text-[10px] font-semibold uppercase tracking-[0.04em] text-white/50 sm:text-[11px] md:justify-start"
-          >
-            <Link href="/" className="transition-colors hover:text-white">
-              Home
-            </Link>
+          <span className="text-[#10201B] font-bold truncate max-w-[280px]">
+            {article.title}
+          </span>
+        </div>
+      </nav>
 
-            <ChevronRight size={12} />
-
-            <Link href="/blogs" className="transition-colors hover:text-white">
-              Blog
-            </Link>
-
-            <ChevronRight size={12} />
-
-            {article.category?.slug ? (
-              <>
-                <Link
-                  href={`/blog-categories/${article.category.slug}`}
-                  className="text-secondary transition-colors hover:text-white"
-                >
-                  {article.category.name}
-                </Link>
-
-                <ChevronRight size={12} />
-              </>
-            ) : null}
-
-            <span className="line-clamp-1 max-w-[220px] text-white/70">
-              {article.title}
-            </span>
-          </nav>
-
-          <div className="mx-auto max-w-5xl text-center md:text-left">
-            <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-secondary/40 bg-white/10 px-4 py-1.5 text-[0.625rem] font-semibold uppercase tracking-[0.05em] text-secondary backdrop-blur sm:text-[0.6875rem]">
-              <Tag size={13} />
-              {article.category?.name || "General"}
+      {/* ── MINIMAL CLEAN HEADER SECTION ── */}
+      <header className="w-full bg-[#FFFFFF] border-b border-[#E2D9CC] py-10 sm:py-14">
+        <div className="max-w-[980px] mx-auto px-4 sm:px-6 lg:px-8 text-center md:text-left">
+          
+          {/* Category Eyebrow Pill */}
+          <div className="flex items-center justify-center md:justify-start gap-2 mb-4">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#EBF3EE] border border-[#BDD6C4] px-3.5 py-1 text-[11px] font-heading font-extrabold uppercase tracking-widest text-[#1C352D]">
+              <Tag size={12} className="text-[#D9A441]" />
+              <span className="text-[#1C352D]">{article.category?.name || "Shopping Guide"}</span>
             </span>
 
-            <h1 className="text-[2rem] font-bold leading-[1.2] tracking-tight text-white sm:text-[2.5rem] lg:text-[3rem] xl:text-[3.25rem]">
-              {article.title}
-            </h1>
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#FDFBF7] border border-[#E2D9CC] px-2.5 py-1 text-[11px] font-mono font-semibold text-[#427867]">
+              <ShieldCheck size={13} className="text-[#34D399]" />
+              <span className="text-[#427867]">Verified Guide</span>
+            </span>
+          </div>
 
-            {article.excerpt ? (
-              <p className="mt-6 max-w-3xl text-[0.9375rem] font-normal leading-[1.7] text-text-secondary sm:text-base">
-                {article.excerpt}
-              </p>
-            ) : null}
+          {/* Article Title */}
+          <h1 className="text-[28px] sm:text-[38px] md:text-[44px] font-heading font-extrabold leading-[1.12] text-[#10201B] tracking-tight mb-4">
+            {article.title}
+          </h1>
 
-            <div className="mt-8 flex flex-col gap-5 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur sm:p-5 md:flex-row md:items-center md:justify-between lg:rounded-[14px]">
-              <div className="flex flex-wrap items-center justify-center gap-5 md:justify-start">
-                <div className="flex items-center gap-3">
-                  {article.author?.avatar ? (
-                    <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-secondary/35">
-                      <Image
-                        src={article.author.avatar}
-                        alt={article.author.name || "Author"}
-                        fill
-                        sizes="48px"
-                        className="object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface-alt text-secondary">
-                      <span className="text-[0.9375rem] font-semibold">
-                        {(article.author?.name || "B")[0].toUpperCase()}
-                      </span>
-                    </div>
-                  )}
+          {/* Subtitle / Excerpt */}
+          {article.excerpt && (
+            <p className="text-[15px] sm:text-[17px] font-normal leading-relaxed text-[#6B7280] mb-8">
+              {article.excerpt}
+            </p>
+          )}
 
-                  <div className="text-left">
-                    <p className="text-sm font-semibold text-white sm:text-base">
-                      {article.author?.name || "BUYMETHIS Editorial Team"}
-                    </p>
-
-                    {article.author?.role ? (
-                      <p className="mt-0.5 text-[0.8125rem] leading-[1.5] text-text-secondary sm:text-sm">
-                        {article.author.role}
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
-
-                <span className="hidden h-9 w-px bg-white/10 md:block" />
-
-                <div className="flex flex-wrap items-center justify-center gap-4">
-                  {publishedDateShort ? (
-                    <time dateTime={article.publishedAt || article.createdAt}>
-                      <MetaPill icon={CalendarDays}>
-                        {publishedDateShort}
-                      </MetaPill>
-                    </time>
-                  ) : null}
-
-                  {article.readTimeMinutes ? (
-                    <MetaPill icon={Clock}>
-                      {article.readTimeMinutes} min read
-                    </MetaPill>
-                  ) : null}
-
-                  <MetaPill icon={ShieldCheck} green>
-                    Editorial Review
-                  </MetaPill>
-                </div>
+          {/* Minimal Meta Row + Author Avatar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-6 border-t border-[#E2D9CC]">
+            <div className="flex items-center justify-center sm:justify-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EBF3EE] border border-[#BDD6C4] text-[#1C352D] font-heading font-extrabold text-[14px]">
+                {(article.author?.name || "V")[0].toUpperCase()}
               </div>
 
-              <div className="flex justify-center md:justify-end">
-                <ShareBar />
+              <div className="text-left">
+                <p className="text-[13.5px] font-heading font-bold text-[#10201B] leading-none">
+                  {article.author?.name || "VestoriaHub Editorial"}
+                </p>
+                <div className="flex items-center gap-2 text-[11.5px] font-mono text-[#8A8F8C] mt-1">
+                  {publishedDateShort && (
+                    <span className="flex items-center gap-1 text-[#8A8F8C]">
+                      <CalendarDays size={11} className="text-[#D9A441]" />
+                      {publishedDateShort}
+                    </span>
+                  )}
+                  {article.readTimeMinutes && (
+                    <>
+                      <span>•</span>
+                      <span className="flex items-center gap-1 text-[#8A8F8C]">
+                        <Clock size={11} /> {article.readTimeMinutes} min read
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
+
+            <div className="flex justify-center sm:justify-end">
+              <ShareBar />
+            </div>
           </div>
+
         </div>
       </header>
 
-      {article.featuredImage?.url ? (
-        <section className="relative z-20 mx-auto -mt-8 w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
-          <div className="relative h-[280px] overflow-hidden rounded-xl border border-border bg-surface shadow-modal sm:h-[380px] md:h-[480px] lg:h-[560px] lg:rounded-[14px]">
+      {/* ── FEATURED IMAGE ── */}
+      {article.featuredImage?.url && (
+        <section className="mx-auto w-full max-w-[1360px] px-4 sm:px-6 lg:px-8 pt-8">
+          <div className="relative aspect-[16/9] md:aspect-[21/9] w-full overflow-hidden rounded-[24px] border-2 border-[#E2D9CC] bg-[#F1E7D8] shadow-xs">
             <Image
               src={article.featuredImage.url}
               alt={article.featuredImage.alt || article.title}
               fill
               priority
               fetchPriority="high"
-              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 90vw, 1280px"
+              sizes="(max-width: 1360px) 100vw, 1360px"
               className="object-cover"
             />
-
-            <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/45 to-transparent" />
           </div>
         </section>
-      ) : null}
+      )}
 
       <MobileTableOfContents items={tableOfContents} />
 
-      <section className="mx-auto w-full max-w-[1280px] px-4 py-10 sm:px-6 sm:py-14 lg:px-8 lg:py-16 xl:py-20">
+      {/* ── TWO-COLUMN ARTICLE CONTENT BODY ── */}
+      <section className="mx-auto w-full max-w-[1360px] px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px]">
-          <article className="min-w-0">
+          
+          {/* Main Article Document Canvas */}
+          <article className="min-w-0 bg-[#FFFFFF] border-2 border-[#E2D9CC] rounded-[24px] p-6 sm:p-10 md:p-12 shadow-xs">
             <BlogArticleClient article={article} />
           </article>
 
+          {/* Sticky Sidebar */}
           <aside className="hidden lg:block">
-            <div className="sticky top-6 flex flex-col gap-6">
+            <div className="sticky top-24 flex flex-col gap-6">
               <SidebarTableOfContents items={tableOfContents} />
 
-              <div className="overflow-hidden rounded-xl border border-primary/30 bg-surface shadow-card-hover lg:rounded-[14px]">
-                <div className="relative p-5">
-                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(124,92,252,0.15),transparent_38%)]" />
-
-                  <div className="relative">
-                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-secondary">
-                      <BookOpen size={22} />
-                    </div>
-
-                    <h3 className="text-[0.9375rem] font-semibold leading-[1.4] text-text-primary sm:text-[1rem] lg:text-[1.0625rem]">
-                      Smarter Shopping Starts Here
-                    </h3>
-
-                    <p className="mt-3 text-[0.9375rem] leading-[1.7] text-text-secondary sm:text-base">
-                      Explore more BUYMETHIS buying guides, verified savings,
-                      and expert deal insights.
-                    </p>
-
-                    <Link
-                      href="/blogs"
-                      className="mt-5 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-primary-hover"
-                    >
-                      Browse Articles
-                      <ArrowRight size={15} />
-                    </Link>
-                  </div>
+              {/* Verified Shopping Callout Box */}
+              <div className="rounded-[22px] border border-[#25473C] bg-[#10201B] p-5 text-[#FDFBF7] shadow-sm">
+                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#162B24] border border-[#25473C] text-[#D9A441]">
+                  <BookOpen size={18} />
                 </div>
+
+                <h3 className="text-[15px] font-heading font-extrabold uppercase tracking-tight text-[#FDFBF7] mb-2 leading-tight">
+                  Shop Smarter With Verified Coupons
+                </h3>
+
+                <p className="text-[12.5px] leading-relaxed text-[#D5E4D9] font-normal mb-4">
+                  Every promotional code and markdown on VestoriaHub is audited daily to ensure genuine checkout savings.
+                </p>
+
+                <Link
+                  href="/stores"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#D9A441] hover:bg-[#BE8E34] text-[#16241F] font-heading font-bold text-[12px] px-4 py-2 transition-all shadow-xs"
+                >
+                  <span className="!text-[#16241F]">Explore Partner Stores</span>
+                  <ArrowRight size={13} className="text-[#16241F]" />
+                </Link>
               </div>
 
-              {publishedDate ? (
-                <div className="rounded-xl border border-border bg-surface p-5 shadow-card lg:rounded-[14px]">
-                  <span className="mb-2 inline-flex items-center gap-2 rounded-md bg-background px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-secondary sm:text-[11px]">
-                    <TrendingUp size={12} />
-                    Article Info
-                  </span>
+              {/* Metadata Card */}
+              {publishedDate && (
+                <div className="rounded-[22px] border border-[#E2D9CC] bg-[#FFFFFF] p-5 shadow-xs text-[12.5px] font-mono text-[#6B7280]">
+                  <div className="flex items-center justify-between pb-2.5 border-b border-[#E2D9CC]">
+                    <span>Published</span>
+                    <strong className="text-[#10201B] font-bold">{publishedDate}</strong>
+                  </div>
 
-                  <div className="mt-4 grid gap-3 text-[0.9375rem] leading-[1.7] text-text-secondary sm:text-base">
-                    <div className="flex items-center justify-between gap-4">
-                      <span>Published</span>
-                      <strong className="text-right text-text-primary">
-                        {publishedDate}
-                      </strong>
+                  {article.readTimeMinutes && (
+                    <div className="flex items-center justify-between py-2.5 border-b border-[#E2D9CC]">
+                      <span>Read Time</span>
+                      <strong className="text-[#10201B] font-bold">{article.readTimeMinutes} mins</strong>
                     </div>
+                  )}
 
-                    {article.readTimeMinutes ? (
-                      <div className="flex items-center justify-between gap-4">
-                        <span>Read Time</span>
-                        <strong className="text-text-primary">
-                          {article.readTimeMinutes} min
-                        </strong>
-                      </div>
-                    ) : null}
-
-                    <div className="flex items-center justify-between gap-4">
-                      <span>Review</span>
-                      <strong className="text-green-400">Editorial</strong>
-                    </div>
+                  <div className="flex items-center justify-between pt-2.5">
+                    <span>Audit Status</span>
+                    <strong className="text-[#34D399] font-bold flex items-center gap-1">
+                      <ShieldCheck size={13} /> Tested Daily
+                    </strong>
                   </div>
                 </div>
-              ) : null}
+              )}
             </div>
           </aside>
+
         </div>
       </section>
 
-      {article.relatedPosts?.length > 0 ? (
-        <section className="mx-auto w-full max-w-[1280px] px-4 pb-20 sm:px-6 lg:px-8">
-          <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-card lg:rounded-[14px]">
-            <div className="border-b border-border bg-background px-4 py-8 sm:px-6 md:px-8">
-              <span className="mb-3 inline-flex items-center gap-2 rounded-full border border-secondary/30 bg-surface px-4 py-1.5 text-[0.625rem] font-semibold uppercase tracking-[0.05em] text-secondary sm:text-[0.6875rem]">
-                <Sparkles size={14} />
-                Continue Reading
-              </span>
+      {/* ── RELATED POSTS FOOTER ── */}
+      {article.relatedPosts?.length > 0 && (
+        <section className="mx-auto w-full max-w-[1360px] px-4 sm:px-6 lg:px-8 pt-4 pb-12">
+          <div className="rounded-[24px] border-2 border-[#E2D9CC] bg-[#FFFFFF] p-6 sm:p-8 shadow-xs">
+            <div className="mb-6 pb-4 border-b border-[#E2D9CC] flex items-center justify-between">
+              <div>
+                <span className="inline-flex items-center gap-1 text-[11px] font-heading font-extrabold uppercase tracking-widest text-[#D9A441] mb-1">
+                  <Sparkles size={13} /> Keep Reading
+                </span>
+                <h2 className="text-[20px] sm:text-[24px] font-heading font-extrabold text-[#10201B] tracking-tight">
+                  Related Guides & Reviews
+                </h2>
+              </div>
 
-              <h2 className="text-[1.5rem] font-bold leading-[1.25] text-text-primary sm:text-[1.75rem] lg:text-[2rem] xl:text-[2.25rem]">
-                You Might Also Like
-              </h2>
-
-              <p className="mt-2 max-w-2xl text-[0.9375rem] leading-[1.7] text-text-secondary sm:text-base">
-                More buying guides, deal insights, and editorial picks selected
-                for smarter shopping.
-              </p>
+              <Link
+                href="/blogs"
+                className="hidden sm:inline-flex items-center gap-1 text-[12.5px] font-heading font-bold text-[#1C352D] hover:text-[#D9A441] transition-colors"
+              >
+                <span>View All Articles</span>
+                <ArrowRight size={13} className="text-[#1C352D]" />
+              </Link>
             </div>
 
-            <div className="grid grid-cols-1 gap-5 bg-background p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-3 lg:gap-6">
-              {article.relatedPosts.map((post) => (
-                <RelatedPostCard key={post._id || post.slug} post={post} />
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {article.relatedPosts.map((post, idx) => (
+                <RelatedPostCard key={post._id || post.slug || idx} post={post} />
               ))}
             </div>
           </div>
         </section>
-      ) : null}
+      )}
     </main>
   );
 }

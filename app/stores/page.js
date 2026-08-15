@@ -9,12 +9,14 @@ import {
   ShieldCheck,
   Sparkles,
   Store as StoreIcon,
+  CheckCircle2,
+  TrendingUp,
 } from "lucide-react";
 import StoreSearch from "../Components/StoreSearch";
 
 export const revalidate = 60;
 export const metadata = {
-  title: "Browse Top Stores & Brands – Verified Coupons & Deals ",
+  title: "Browse Top Stores & Brands – Verified Coupons & Deals",
   description:
     "Browse 500+ top brands and stores with verified coupon codes, exclusive deals, signup bonuses, and cashback offers — hand-checked before publishing and updated daily. Start saving on every purchase.",
   keywords:
@@ -27,21 +29,12 @@ export const metadata = {
     url: "https://www.vestoriahub.com/stores",
     siteName: "VestoriaHub",
     type: "website",
-   /*  images: [
-      {
-        url: "https://www.vestoriahub.com/og-stores.jpg",
-        width: 1200,
-        height: 630,
-        alt: "Browse Top Stores & Brands on VestoriaHub",
-      },
-    ], */
   },
   twitter: {
     card: "summary_large_image",
     title: "Browse Top Stores & Brands – Verified Coupons & Deals",
     description:
       "Verified coupons, exclusive deals & signup bonuses from 500+ top brands. Updated daily.",
-    /* images: ["https://www.vestoriahub.com/og-stores.jpg"], */
   },
   robots: {
     index: true,
@@ -78,53 +71,66 @@ export default async function StoresPage({ searchParams }) {
   const stores = data?.stores || [];
   const isError = !data;
 
-  // Total active offers across the current result set — gives the header
-  // a real, live number instead of a static claim.
   const totalOffers = stores.reduce(
     (sum, store) => sum + (store.activeOffers || 0),
     0,
   );
 
   return (
-    <main className="min-h-screen bg-[var(--color-background)] font-sans pb-24">
-      {/* ── HERO ── */}
-   <section className="relative bg-[var(--color-navy-900)] overflow-hidden border-b border-[var(--color-border)]">
-        {/* Signature backdrop: a quiet grid of receipt-style tick marks,
-            nodding to "verified savings" without resorting to generic blobs */}
-        <div
-          className="absolute inset-0 opacity-[0.05] pointer-events-none"
-          style={{
-            backgroundImage:
-              "repeating-linear-gradient(0deg, transparent, transparent 27px, var(--color-border) 27px, var(--color-border) 28px)",
-          }}
-        />
-        <div className="absolute -right-[120px] -top-[120px] w-[420px] h-[420px] rounded-full bg-[var(--color-primary)] opacity-[0.08] blur-[150px] pointer-events-none" />
-        <div className="absolute -left-[80px] bottom-[-140px] w-[320px] h-[320px] rounded-full bg-[var(--color-secondary)] opacity-[0.06] blur-[120px] pointer-events-none" />
+    <main className="min-h-screen bg-[#F8F0E5] font-sans pb-24">
+      {/* ── HERO SECTION WITH S-WAVE ACCENT ── */}
+      <section className="relative bg-[#10201B] overflow-hidden border-b border-[#25473C]">
+        {/* Background S-Wave */}
+        <div className="absolute top-1/2 left-0 w-[200vw] lg:w-full h-[320px] -translate-y-1/2 pointer-events-none z-0 opacity-25">
+          <svg
+            viewBox="0 0 1440 300"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-full h-full text-[#A8C3B0]"
+          >
+            <path
+              d="M-100 150 C 300 350, 600 -50, 1000 150 C 1300 300, 1600 50, 1800 150"
+              stroke="currentColor"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+            />
+            <path
+              d="M-100 170 C 300 370, 600 -30, 1000 170 C 1300 320, 1600 70, 1800 170"
+              stroke="#D9A441"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeDasharray="6 8"
+              className="opacity-60"
+            />
+          </svg>
+        </div>
 
-        <div className="relative max-w-[1280px] mx-auto px-6 pt-20 pb-24 md:pt-28 md:pb-28 text-center">
-          <div className="inline-flex items-center gap-[8px] bg-[var(--color-surface)] text-[var(--color-text-secondary)] border border-[var(--color-border)] text-[12px] font-bold uppercase tracking-[0.08em] px-[14px] py-[7px] rounded-full mb-[24px]">
-            <ShieldCheck size={14} className="text-[var(--color-primary)]" />
-            {stores.length}+ Verified Stores & Brands
+        {/* Ambient Glows */}
+        <div className="absolute -right-28 -top-28 w-[420px] h-[420px] rounded-full bg-[#D9A441]/10 blur-[140px] pointer-events-none" />
+        <div className="absolute -left-20 bottom-[-100px] w-[360px] h-[360px] rounded-full bg-[#1C352D] blur-[120px] pointer-events-none" />
+
+        <div className="relative max-w-[1360px] mx-auto px-6 pt-20 pb-20 md:pt-28 md:pb-24 text-center z-10">
+          <div className="inline-flex items-center gap-2 bg-[#162B24] !text-[#D9A441] border border-[#25473C] text-[11.5px] font-heading font-extrabold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6 shadow-sm">
+            <ShieldCheck size={14} />
+            <span>{stores.length}+ Verified Brand Partners</span>
           </div>
 
-          <h1 className="text-[var(--color-text-primary)] text-[40px] md:text-[60px] font-extrabold tracking-tight leading-[1.02] mb-[20px]">
-            Top Stores & Brands,
+          <h1 className="!text-[#FDFBF7] text-[38px] md:text-[58px] font-heading font-extrabold tracking-tight leading-[1.08] mb-5">
+            Explore Top Stores & Brands,
             <br />
-            <span className="text-[var(--color-primary)]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D9A441] via-[#F8F0E5] to-[#D9A441]">
               verified coupons inside.
             </span>
           </h1>
 
-          <p className="text-[var(--color-text-secondary)] text-[16px] md:text-[18px] max-w-[560px] mx-auto mb-[40px] leading-[1.6]">
-            Explore verified coupon codes, exclusive deals, signup bonuses,
-            and cashback offers from the brands you already shop —
-            hand-checked before publishing, updated daily.
+          <p className="!text-[#D5E4D9] text-[15px] md:text-[17px] max-w-[620px] mx-auto mb-10 leading-relaxed font-normal">
+            Explore tested promo codes, store discounts, and exclusive perks across trusted global retailers. Every deal is hand-verified before checkout.
           </p>
 
-          <div className="max-w-[600px] mx-auto">
+          <div className="max-w-[620px] mx-auto mb-10">
             <Suspense
               fallback={
-                <div className="h-[56px] w-full rounded-full bg-[var(--color-surface)] animate-pulse" />
+                <div className="h-[52px] w-full rounded-full bg-[#162B24] border border-[#25473C] animate-pulse" />
               }
             >
               <StoreSearch />
@@ -132,22 +138,35 @@ export default async function StoresPage({ searchParams }) {
           </div>
 
           {!isError && (
-            <div className="flex items-center justify-center gap-[32px] md:gap-[48px] mt-[40px] text-[var(--color-text-primary)]">
-              <div>
-                <div className="text-[24px] md:text-[28px] font-extrabold leading-none mb-[4px]">
+            <div className="inline-flex items-center justify-center gap-8 md:gap-14 bg-[#162B24]/80 border border-[#25473C] px-8 py-3.5 rounded-2xl shadow-sm">
+              <div className="text-center">
+                <div className="text-[24px] md:text-[28px] font-heading font-extrabold leading-none !text-[#FDFBF7] mb-1">
                   {stores.length}
                 </div>
-                <div className="text-[11px] uppercase tracking-[0.06em] font-bold text-[var(--color-text-secondary)] opacity-60">
+                <div className="text-[10.5px] uppercase tracking-widest font-heading font-bold !text-[#A8C3B0]">
                   Stores Listed
                 </div>
               </div>
-              <div className="w-[1px] h-[32px] bg-[var(--color-border)]" />
-              <div>
-                <div className="text-[24px] md:text-[28px] font-extrabold leading-none mb-[4px]">
+
+              <div className="w-[1px] h-[28px] bg-[#25473C]" />
+
+              <div className="text-center">
+                <div className="text-[24px] md:text-[28px] font-heading font-extrabold leading-none !text-[#D9A441] mb-1">
                   {totalOffers}
                 </div>
-                <div className="text-[11px] uppercase tracking-[0.06em] font-bold text-[var(--color-text-secondary)] opacity-60">
-                  Active Offers
+                <div className="text-[10.5px] uppercase tracking-widest font-heading font-bold !text-[#A8C3B0]">
+                  Live Offers
+                </div>
+              </div>
+
+              <div className="w-[1px] h-[28px] bg-[#25473C]" />
+
+              <div className="text-center">
+                <div className="text-[24px] md:text-[28px] font-heading font-extrabold leading-none !text-[#34D399] mb-1">
+                  100%
+                </div>
+                <div className="text-[10.5px] uppercase tracking-widest font-heading font-bold !text-[#A8C3B0]">
+                  Verified
                 </div>
               </div>
             </div>
@@ -155,23 +174,23 @@ export default async function StoresPage({ searchParams }) {
         </div>
       </section>
 
-      <div className="max-w-[1280px] mx-auto px-6 pt-16">
+      {/* ── STORES DIRECTORY CONTENT ── */}
+      <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 pt-14">
         {/* Error State */}
         {isError && (
-          <div className="py-24 text-center bg-[var(--color-surface)] rounded-[24px] border border-[var(--color-border)]">
-            <div className="w-[64px] h-[64px] rounded-full bg-[var(--color-navy-900)] flex items-center justify-center mx-auto mb-[20px] shadow-[0_4px_12px_rgba(3,4,10,0.5)]">
-              <AlertCircle className="w-8 h-8 text-[var(--color-danger)]" />
+          <div className="py-20 text-center bg-[#FDFBF7] rounded-3xl border border-[#E2D9CC] shadow-xs">
+            <div className="w-14 h-14 rounded-full bg-[#FAF0EC] border border-[#E8D0C5] flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-7 h-7 text-[#C1432F]" />
             </div>
-            <h2 className="text-[var(--color-text-primary)] font-bold text-[22px] mb-[8px]">
+            <h2 className="!text-[#1C352D] font-heading font-bold text-[20px] mb-2">
               Unable to load stores
             </h2>
-            <p className="text-[var(--color-text-secondary)] text-[14px] mb-[24px]">
-              Something went wrong on our end. Refresh the page, or check back
-              shortly.
+            <p className="!text-[#6B7280] text-[13.5px] mb-6 max-w-sm mx-auto">
+              Something went wrong while fetching the merchant list. Refresh or try again.
             </p>
             <Link
               href="/stores"
-              className="inline-flex items-center gap-[6px] bg-[var(--color-primary)] text-white text-[14px] font-bold px-[20px] py-[12px] rounded-full hover:bg-[var(--color-primary-hover)] transition-colors"
+              className="inline-flex items-center gap-1.5 bg-[#1C352D] !text-[#FDFBF7] text-[13px] font-heading font-bold px-6 py-2.5 rounded-full hover:bg-[#10201B] transition-colors shadow-xs"
             >
               Try Again
             </Link>
@@ -180,119 +199,147 @@ export default async function StoresPage({ searchParams }) {
 
         {/* Empty State */}
         {!isError && stores.length === 0 && (
-          <div className="py-24 text-center bg-[var(--color-surface)] rounded-[24px] border border-[var(--color-border)]">
-            <div className="w-[64px] h-[64px] rounded-full bg-[var(--color-navy-900)] flex items-center justify-center mx-auto mb-[20px] shadow-[0_4px_12px_rgba(3,4,10,0.5)]">
-              <SearchIcon className="w-8 h-8 text-[var(--color-text-secondary)] opacity-40" />
+          <div className="py-20 text-center bg-[#FDFBF7] rounded-3xl border border-[#E2D9CC] shadow-xs">
+            <div className="w-14 h-14 rounded-full bg-[#EBF3EE] border border-[#BDD6C4] flex items-center justify-center mx-auto mb-4">
+              <SearchIcon className="w-7 h-7 text-[#1C352D]" />
             </div>
-            <h2 className="text-[var(--color-text-primary)] font-bold text-[22px] mb-[8px]">
+            <h2 className="!text-[#1C352D] font-heading font-bold text-[20px] mb-2">
               No stores found
             </h2>
-            <p className="text-[var(--color-text-secondary)] text-[14px] mb-[24px]">
+            <p className="!text-[#6B7280] text-[13.5px] mb-6 max-w-sm mx-auto">
               {search
-                ? `We couldn't find a match for "${search}". Try a different name.`
-                : "No stores are available right now."}
+                ? `No merchants matching "${search}". Try searching with another brand name.`
+                : "No store partners are available right now."}
             </p>
             <Link
               href="/stores"
-              className="inline-flex items-center gap-[6px] bg-[var(--color-surface-alt)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-[14px] font-bold px-[20px] py-[12px] rounded-full hover:bg-[var(--color-primary)] hover:border-[var(--color-primary)] hover:text-white transition-colors"
+              className="inline-flex items-center gap-1.5 bg-[#1C352D] !text-[#FDFBF7] text-[13px] font-heading font-bold px-6 py-2.5 rounded-full hover:bg-[#10201B] transition-colors shadow-xs"
             >
               Clear Search
             </Link>
           </div>
         )}
 
-        {/* ── RESULTS HEADER ── */}
+        {/* Results Bar */}
         {!isError && stores.length > 0 && (
-          <div className="flex items-center justify-between mb-[28px]">
-            <div className="flex items-center gap-[10px]">
-              <StoreIcon size={18} className="text-[var(--color-primary)]" />
-              <h2 className="text-[var(--color-text-primary)] text-[18px] font-bold">
+          <div className="flex items-center justify-between mb-8 pb-4 border-b border-[#E2D9CC]">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-[#EBF3EE] border border-[#BDD6C4] flex items-center justify-center text-[#1C352D]">
+                <StoreIcon size={16} />
+              </div>
+              <h2 className="!text-[#1C352D] text-[18px] sm:text-[20px] font-heading font-bold">
                 {search ? (
                   <>
                     Results for{" "}
-                    <span className="text-[var(--color-primary)]">
-                      "{search}"
+                    <span className="text-[#D9A441]">
+                      &ldquo;{search}&rdquo;
                     </span>
                   </>
                 ) : (
-                  "All Stores"
+                  "All Partner Brands"
                 )}
               </h2>
             </div>
-            <span className="text-[var(--color-text-secondary)] text-[13px] font-medium">
-              {stores.length} {stores.length === 1 ? "store" : "stores"}
+            <span className="text-[12.5px] font-mono font-bold !text-[#8A8F8C] uppercase">
+              {stores.length} {stores.length === 1 ? "Brand" : "Brands"} Available
             </span>
           </div>
         )}
 
-        {/* ── STORES GRID ── */}
-        {!isError && stores.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
-            {stores.map((store) => (
-              <Link
-                href={`/stores/${store.slug}`}
-                key={store._id}
-                prefetch={true}
-                className="h-full"
-              >
-                <article className="group h-full bg-[var(--color-surface)] rounded-[20px] border border-[var(--color-border)] p-6 flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-[3px] hover:shadow-[0_24px_48px_rgba(3,4,10,0.5)] hover:border-[var(--color-primary)]/50 relative overflow-hidden">
-                  {/* Top accent line — appears on hover, keeps cards quiet by default */}
-                  <div className="absolute top-0 left-0 right-0 h-[3px] bg-[var(--color-primary)] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300" />
+       {/* ── MODERN STORE PROFILE BENTO GRID ── */}
+{!isError && stores.length > 0 && (
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    {stores.map((store) => {
+      const activeCount = store.activeOffers || 0;
+      const hasOffers = activeCount > 0;
 
-                  {store.activeOffers > 0 && (
-                    <span className="absolute top-[14px] right-[14px] bg-[var(--color-secondary)] text-[var(--color-navy-950)] text-[10px] font-extrabold px-[8px] py-[3px] rounded-full shadow-[0_2px_8px_rgba(155,138,251,0.3)]">
-                      HOT
-                    </span>
-                  )}
+      return (
+        <Link
+          href={`/stores/${store.slug}`}
+          key={store._id}
+          prefetch={true}
+          className="group block h-full focus:outline-none"
+        >
+          <article className="h-full bg-[#FFFFFF] rounded-[24px] border border-[#E2D9CC] p-4 sm:p-5 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:border-[#BDD6C4] hover:shadow-[0_14px_32px_rgba(28,53,45,0.08)] relative">
+            
+            {/* Top Store Banner + Floating Logo Avatar Container */}
+            <div className="relative mb-9">
+              {/* Background Header Strip */}
+              <div className="w-full h-20 rounded-[18px] bg-[#162B24] border border-[#25473C] p-3 flex items-start justify-between relative overflow-hidden">
+                <div className="absolute inset-0 opacity-15 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#D9A441] to-transparent pointer-events-none" />
+                
+                {/* Verified Badge */}
+                <span className="relative z-10 inline-flex items-center gap-1 bg-[#10201B]/90 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-heading font-extrabold uppercase tracking-wider text-[#A8C3B0] border border-[#25473C]">
+                  <CheckCircle2 size={11} className="text-[#34D399]" />
+                  Verified
+                </span>
 
-                  <div className="w-20 h-20 rounded-full bg-[var(--color-navy-900)] flex items-center justify-center mb-6 overflow-hidden border border-[var(--color-border)] group-hover:scale-105 group-hover:shadow-[0_4px_16px_rgba(124,92,252,0.15)] transition-all">
-                    {store.logo ? (
-                      <Image
-                        src={store.logo}
-                        alt={`${store.name} logo`}
-                        width={80}
-                        height={80}
-                        className="object-contain p-3"
-                      />
-                    ) : (
-                      <span className="text-[var(--color-primary)] text-2xl font-bold">
-                        {store.name.charAt(0).toUpperCase()}
-                      </span>
-                    )}
-                  </div>
+                {/* Hot Deals Badge */}
+                {hasOffers && (
+                  <span className="relative z-10 bg-[#D9A441] text-[#16241F] text-[10px] font-heading font-black px-2.5 py-0.5 rounded-full shadow-xs tracking-wider uppercase">
+                    HOT
+                  </span>
+                )}
+              </div>
 
-                  <h2 className="text-[var(--color-text-primary)] text-[17px] font-bold mb-5 line-clamp-1 group-hover:text-[var(--color-primary)] transition-colors">
-                    {store.name}
-                  </h2>
-
-                  <div className="w-full mt-auto flex items-center justify-between border-t border-[var(--color-border)] pt-4">
-                    <div className="bg-[var(--color-surface-alt)] text-[var(--color-text-secondary)] text-[11px] font-bold px-3 py-1 rounded-md flex items-center gap-1.5 border border-[var(--color-border)]/50">
-                      <Tag
-                        size={12}
-                        className="text-[var(--color-text-secondary)]"
-                      />{" "}
-                      {store.activeOffers || 0} Offers
-                    </div>
-                    <div className="w-[28px] h-[28px] rounded-full bg-[var(--color-navy-900)] flex items-center justify-center text-[var(--color-text-secondary)] group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors shadow-sm">
-                      <ArrowUpRight size={14} />
-                    </div>
-                  </div>
-                </article>
-              </Link>
-            ))}
-          </div>
-        )}
-
-        {/* ── TRUST STRIP ── */}
-        {!isError && stores.length > 0 && (
-          <div className="mt-[64px] flex flex-col sm:flex-row items-center justify-center gap-[12px] sm:gap-[40px] py-[28px] border-t border-[var(--color-border)] text-[var(--color-text-secondary)] text-[13px] font-medium opacity-80">
-            <div className="flex items-center gap-[8px]">
-              <ShieldCheck size={16} className="text-[var(--color-primary)]" />
-              Every code checked before publishing
+              {/* Floating Logo Badge (Cleanly elevated without clipping) */}
+              <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 w-16 h-16 rounded-2xl bg-[#FFFFFF] border-2 border-[#E2D9CC] flex items-center justify-center p-2.5 shadow-[0_8px_20px_rgba(28,53,45,0.08)] group-hover:scale-105 group-hover:border-[#BDD6C4] transition-all z-20 overflow-hidden">
+                {store.logo ? (
+                  <Image
+                    src={store.logo}
+                    alt={`${store.name} logo`}
+                    width={60}
+                    height={60}
+                    className="object-contain w-full h-full"
+                  />
+                ) : (
+                  <span className="text-[#1C352D] text-xl font-heading font-black">
+                    {store.name.charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-[8px]">
-              <Sparkles size={16} className="text-[var(--color-primary)]" />
-              New stores added every week
+
+            {/* Store Information */}
+            <div className="text-center mt-2 mb-5 px-2">
+              <h3 className="!text-[#10201B] text-[17px] font-heading font-bold line-clamp-1 group-hover:!text-[#D9A441] transition-colors">
+                {store.name}
+              </h3>
+              <p className="text-[12.5px] !text-[#8A8F8C] mt-0.5 line-clamp-1 font-medium">
+                {store.category?.name || "Online Marketplace"}
+              </p>
+            </div>
+
+            {/* Bottom Offer Counter Footer */}
+            <div className="w-full mt-auto pt-3.5 border-t border-[#E2D9CC] flex items-center justify-between">
+              <div className="inline-flex items-center gap-1.5 bg-[#EBF3EE] border border-[#BDD6C4] px-3 py-1 rounded-lg !text-[#1C352D] text-[11px] font-heading font-bold">
+                <Tag size={12} className="text-[#D9A441]" />
+                <span>{activeCount} Active Deals</span>
+              </div>
+
+              <div className="w-8 h-8 rounded-full bg-[#1C352D] text-[#FDFBF7] flex items-center justify-center group-hover:bg-[#D9A441] group-hover:text-[#16241F] transition-all shadow-xs">
+                <ArrowUpRight size={14} strokeWidth={2.5} />
+              </div>
+            </div>
+
+          </article>
+        </Link>
+      );
+    })}
+  </div>
+)}
+
+        {/* ── TRUST & DISCLOSURE STRIP ── */}
+        {!isError && stores.length > 0 && (
+          <div className="mt-16 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-10 py-6 border-t border-[#E2D9CC] !text-[#6B7280] text-[13px] font-medium text-center">
+            <div className="flex items-center gap-2">
+              <ShieldCheck size={16} className="text-[#D9A441]" />
+              <span>Tested & verified checkout codes daily</span>
+            </div>
+            <div className="hidden sm:block w-1 h-1 rounded-full bg-[#8A8F8C]" />
+            <div className="flex items-center gap-2">
+              <Sparkles size={16} className="text-[#D9A441]" />
+              <span>Direct merchant affiliate network integration</span>
             </div>
           </div>
         )}

@@ -38,7 +38,7 @@ export default function Home() {
       <Stats />
 
       {/* <Process /> */}
-      <CTA />
+  {/*     <CTA /> */}
     </div>
   );
 }

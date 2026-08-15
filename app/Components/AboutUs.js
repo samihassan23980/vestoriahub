@@ -1,6 +1,4 @@
-"use client";
-
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { 
@@ -12,8 +10,6 @@ import {
   ShoppingBag,
   BookOpen,
 } from "lucide-react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
 const IMAGES = {
   hero: "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1200&auto=format&fit=crop",
@@ -22,64 +18,8 @@ const IMAGES = {
 };
 
 export default function AboutUs() {
-  const containerRef = useRef(null);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      gsap.registerPlugin(ScrollTrigger);
-
-      const ctx = gsap.context(() => {
-        // 1. Text & Left Elements Entrance
-        gsap.from(".editorial-fade", {
-          y: 35,
-          opacity: 0,
-          stagger: 0.12,
-          duration: 1.1,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: containerRef.current,
-            start: "top 80%",
-          },
-        });
-
-        // 2. Bento Grid Cards Entrance
-        gsap.from(".bento-card", {
-          scale: 0.94,
-          opacity: 0,
-          y: 40,
-          stagger: 0.15,
-          duration: 1.2,
-          ease: "power4.out",
-          scrollTrigger: {
-            trigger: ".bento-grid-wrapper",
-            start: "top 75%",
-          },
-        });
-
-        // 3. Floating Micro-Badges
-        gsap.from(".floating-pill", {
-          scale: 0.8,
-          opacity: 0,
-          duration: 0.9,
-          delay: 0.4,
-          stagger: 0.1,
-          ease: "back.out(1.7)",
-          scrollTrigger: {
-            trigger: ".bento-grid-wrapper",
-            start: "top 75%",
-          },
-        });
-      }, containerRef);
-
-      return () => ctx.revert();
-    }
-  }, []);
-
   return (
-    <section
-      ref={containerRef}
-      className="relative w-full bg-[#10201B] !text-[#F8F0E5] overflow-hidden py-24 lg:py-32 border-b border-[#25473C] font-sans"
-    >
+    <section className="relative w-full bg-[#10201B] !text-[#F8F0E5] overflow-hidden py-24 lg:py-32 border-b border-[#25473C] font-sans">
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           
@@ -87,7 +27,7 @@ export default function AboutUs() {
           <div className="lg:col-span-5 flex flex-col items-start space-y-7">
             
             {/* Mission Badge */}
-            <div className="editorial-fade inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#162B24] border border-[#25473C] backdrop-blur-md shadow-sm">
+            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#162B24] border border-[#25473C] backdrop-blur-md shadow-sm">
               <span className="w-2 h-2 rounded-full bg-[#D9A441] animate-pulse" />
               <span className="text-[11px] font-heading font-extrabold tracking-[0.2em] uppercase !text-[#D9A441]">
                 About VestoriaHub
@@ -95,7 +35,7 @@ export default function AboutUs() {
             </div>
 
             {/* Headline */}
-            <h2 className="editorial-fade font-heading text-4xl sm:text-5xl lg:text-[52px] font-normal tracking-tight leading-[1.08] !text-[#FDFBF7]">
+            <h2 className="font-heading text-4xl sm:text-5xl lg:text-[52px] font-normal tracking-tight leading-[1.08] !text-[#FDFBF7]">
               Shopping should be <br />
               <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-[#D9A441] via-[#F8F0E5] to-[#D9A441]">
                 rewarding,
@@ -105,7 +45,7 @@ export default function AboutUs() {
             </h2>
 
             {/* Story Paragraphs */}
-            <div className="editorial-fade space-y-4 !text-[#D5E4D9] text-[15.5px] sm:text-[16.5px] leading-relaxed font-normal">
+            <div className="space-y-4 !text-[#D5E4D9] text-[15.5px] sm:text-[16.5px] leading-relaxed font-normal">
               <p className="!text-[#D5E4D9]">
                 VestoriaHub is your smart shopping companion built to sit between the world’s top retail brands and everyday shoppers. We exist to make sure you never pay full price when a verified deal is just one click away.
               </p>
@@ -115,7 +55,7 @@ export default function AboutUs() {
             </div>
 
             {/* Feature Checkpoints: 4 Value Pillars */}
-            <div className="editorial-fade grid grid-cols-2 gap-3.5 w-full pt-1">
+            <div className="grid grid-cols-2 gap-3.5 w-full pt-1">
               {[
                 { title: "Tested & Verified", desc: "Codes checked before checkout" },
                 { title: "Curated Drops", desc: "Genuine Amazon & retail sales" },
@@ -136,7 +76,7 @@ export default function AboutUs() {
             </div>
 
             {/* CTA Buttons */}
-            <div className="editorial-fade flex flex-wrap items-center gap-4 pt-3 w-full sm:w-auto">
+            <div className="flex flex-wrap items-center gap-4 pt-3 w-full sm:w-auto">
               <Link
                 href="/stores"
                 className="group relative inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full bg-gradient-to-r from-[#D9A441] via-[#E5B558] to-[#D9A441] !text-[#16241F] font-heading font-bold text-sm transition-all duration-300 shadow-[0_6px_20px_rgba(217,164,65,0.3)] hover:shadow-[0_8px_25px_rgba(217,164,65,0.45)] hover:-translate-y-0.5 active:scale-[0.98]"
@@ -154,11 +94,11 @@ export default function AboutUs() {
           </div>
 
           {/* ──────── RIGHT COLUMN: Modular Bento Grid Showcase ──────── */}
-          <div className="lg:col-span-7 bento-grid-wrapper">
+          <div className="lg:col-span-7">
             <div className="grid grid-cols-12 gap-4 relative">
               
               {/* Primary Large Card: Main Editorial Visual */}
-              <div className="bento-card col-span-12 sm:col-span-7 h-[360px] sm:h-[440px] rounded-3xl overflow-hidden relative border border-[#25473C] group bg-[#162B24] shadow-2xl">
+              <div className="col-span-12 sm:col-span-7 h-[360px] sm:h-[440px] rounded-3xl overflow-hidden relative border border-[#25473C] group bg-[#162B24] shadow-2xl">
                 <Image
                   src={IMAGES.hero}
                   alt="VestoriaHub Smart Shopping Companion"
@@ -169,7 +109,7 @@ export default function AboutUs() {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#10201B] via-[#10201B]/40 to-transparent" />
                 
                 {/* Floating pill over image */}
-                <div className="floating-pill absolute top-4 left-4 px-3.5 py-1.5 rounded-full bg-[#10201B]/90 backdrop-blur-md border border-[#25473C] flex items-center gap-2 shadow-md">
+                <div className="absolute top-4 left-4 px-3.5 py-1.5 rounded-full bg-[#10201B]/90 backdrop-blur-md border border-[#25473C] flex items-center gap-2 shadow-md">
                   <Sparkles size={13} className="text-[#D9A441]" />
                   <span className="text-[11px] font-heading font-bold !text-[#F8F0E5] uppercase tracking-wider">Curated Discovery</span>
                 </div>
@@ -181,7 +121,7 @@ export default function AboutUs() {
               </div>
 
               {/* Top Right Card: Live Stats Badge */}
-              <div className="bento-card col-span-12 sm:col-span-5 flex flex-col justify-between p-6 rounded-3xl bg-[#162B24] border border-[#25473C] shadow-lg relative overflow-hidden">
+              <div className="col-span-12 sm:col-span-5 flex flex-col justify-between p-6 rounded-3xl bg-[#162B24] border border-[#25473C] shadow-lg relative overflow-hidden">
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 rounded-2xl bg-[#10201B] border border-[#25473C] flex items-center justify-center text-[#D9A441]">
                     <TrendingUp size={20} />
@@ -210,7 +150,7 @@ export default function AboutUs() {
               </div>
 
               {/* Bottom Left Card: Curated Marketplace Visual */}
-              <div className="bento-card col-span-6 sm:col-span-5 h-[200px] rounded-3xl overflow-hidden relative border border-[#25473C] group bg-[#162B24]">
+              <div className="col-span-6 sm:col-span-5 h-[200px] rounded-3xl overflow-hidden relative border border-[#25473C] group bg-[#162B24]">
                 <Image
                   src={IMAGES.lifestyle}
                   alt="Discount Marketplace"
@@ -226,7 +166,7 @@ export default function AboutUs() {
               </div>
 
               {/* Bottom Right Card: Knowledge Hub Engine */}
-              <div className="bento-card col-span-6 sm:col-span-7 h-[200px] p-5 rounded-3xl bg-[#162B24] border border-[#25473C] flex flex-col justify-between hover:border-[#A8C3B0]/40 transition-all shadow-md">
+              <div className="col-span-6 sm:col-span-7 h-[200px] p-5 rounded-3xl bg-[#162B24] border border-[#25473C] flex flex-col justify-between hover:border-[#A8C3B0]/40 transition-all shadow-md">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-[#10201B] border border-[#25473C] flex items-center justify-center text-[#D9A441]">
                     <BookOpen size={16} />
