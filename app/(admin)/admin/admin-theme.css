@@ -1,0 +1,237 @@
+@import "tailwindcss";
+
+/* ─── ISOLATED DARK BRAND THEME FOR ADMIN PANEL ─── */
+.admin-isolated-theme {
+  /* Exact Color Variables Mapping from globals.css */
+  --navy-50: #C2C4D6;
+  --navy-100: #9A9EBE;
+  --navy-200: #6A6F9C;
+  --navy-300: #454A77;
+  --navy-400: #262A52;
+  --navy-500: #181A38;
+  --navy-600: #13152B;
+  --navy-700: #0F1124;
+  --navy-800: #0A0B1E;
+  --navy-900: #060713;
+  --navy-950: #03040A;
+
+  --purple-400: #9B8AFB;
+  --purple-500: #7C5CFC;
+  --purple-600: #6E4FF5;
+  --purple-700: #5B3CE0;
+
+  --lavender-300: #C7C9DC;
+  --lavender-400: #A0A3BD;
+  --lavender-500: #7A7E9C;
+  --indigo-line: #2A2D4A;
+  --white: #FFFFFF;
+
+  /* Overrides for Public Site Variable Leaks */
+  --background: var(--navy-800) !important;
+  --foreground: var(--white) !important;
+  --color-background: var(--navy-800) !important;
+  --color-foreground: var(--white) !important;
+  --color-surface: var(--navy-600) !important;
+  --color-border: var(--indigo-line) !important;
+  --color-text-primary: var(--white) !important;
+  --color-text-secondary: var(--lavender-400) !important;
+
+  /* Base Styles */
+  background-color: var(--navy-800) !important;
+  color: var(--white) !important;
+  color-scheme: dark !important;
+  min-height: 100vh;
+  width: 100%;
+  font-family: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif !important;
+}
+
+/* ─── 1. SIDEBAR (NAVY-600 / #13152B) ─── */
+.admin-isolated-theme aside {
+  background-color: var(--navy-600) !important;
+  border-right: 1px solid var(--indigo-line) !important;
+}
+
+.admin-isolated-theme aside h3,
+.admin-isolated-theme aside [class*="tracking-wider"] {
+  color: var(--lavender-400) !important;
+  opacity: 0.8 !important;
+}
+
+.admin-isolated-theme aside a {
+  color: var(--lavender-400) !important;
+}
+
+.admin-isolated-theme aside a:hover {
+  background-color: var(--navy-500) !important;
+  color: var(--white) !important;
+}
+
+/* Active Nav Item Highlighting */
+.admin-isolated-theme aside a[class*="bg-[#7C5CFC]"],
+.admin-isolated-theme aside a[class*="bg-[var(--purple-500)]"],
+.admin-isolated-theme aside a[class*="bg-[#2D2380]"] {
+  background-color: var(--purple-500) !important;
+  color: var(--white) !important;
+  box-shadow: 0 4px 14px rgba(124, 92, 252, 0.25) !important;
+}
+
+.admin-isolated-theme aside a[class*="bg-[#7C5CFC]"] *,
+.admin-isolated-theme aside a[class*="bg-[var(--purple-500)]"] * {
+  color: var(--white) !important;
+}
+
+/* ─── 2. MAIN HEADER & SEARCH BAR ─── */
+.admin-isolated-theme header {
+  background-color: var(--navy-600) !important;
+  border-bottom: 1px solid var(--indigo-line) !important;
+}
+
+.admin-isolated-theme header input {
+  background-color: var(--navy-800) !important;
+  border: 1.5px solid var(--indigo-line) !important;
+  color: var(--white) !important;
+}
+
+.admin-isolated-theme header input::placeholder {
+  color: rgba(160, 163, 189, 0.5) !important;
+}
+
+/* ─── 3. HEADINGS & TYPOGRAPHY VISIBILITY ─── */
+.admin-isolated-theme main h1,
+.admin-isolated-theme main h2,
+.admin-isolated-theme main h3,
+.admin-isolated-theme main h4,
+.admin-isolated-theme main h5,
+.admin-isolated-theme main h6,
+.admin-isolated-theme main [class*="font-bold"]:not(button *):not([class*="bg-"]):not([class*="text-"]) {
+  color: var(--white) !important;
+  opacity: 1 !important;
+}
+
+.admin-isolated-theme main p,
+.admin-isolated-theme main label,
+.admin-isolated-theme main span:not([class*="bg-"]):not([class*="text-white"]):not([class*="text-[#"]):not([class*="text-green"]):not([class*="text-red"]) {
+  color: var(--lavender-400) !important;
+}
+
+/* ─── 4. CARDS, SURFACES & KPI CONTAINERS ─── */
+.admin-isolated-theme main .bg-white,
+.admin-isolated-theme main [class*="bg-white"],
+.admin-isolated-theme main .bg-surface {
+  background-color: var(--navy-600) !important;
+  border: 1px solid var(--indigo-line) !important;
+  color: var(--white) !important;
+}
+
+.admin-isolated-theme main [class*="bg-[#F7F6FF]"],
+.admin-isolated-theme main [class*="bg-gray-50"],
+.admin-isolated-theme main [class*="bg-neutral-50"] {
+  background-color: var(--navy-500) !important;
+  color: var(--white) !important;
+}
+
+/* KPI Numbers / Bold Values */
+.admin-isolated-theme main [class*="text-3xl"],
+.admin-isolated-theme main [class*="text-2xl"],
+.admin-isolated-theme main [class*="text-[28px]"] {
+  color: var(--white) !important;
+}
+
+/* ─── 5. FORM INPUTS & SELECTS ─── */
+.admin-isolated-theme input[type="text"],
+.admin-isolated-theme input[type="password"],
+.admin-isolated-theme input[type="email"],
+.admin-isolated-theme input[type="number"],
+.admin-isolated-theme input[type="url"],
+.admin-isolated-theme select,
+.admin-isolated-theme textarea {
+  background-color: var(--navy-800) !important;
+  border: 1px solid var(--indigo-line) !important;
+  color: var(--white) !important;
+}
+
+.admin-isolated-theme input::placeholder,
+.admin-isolated-theme textarea::placeholder {
+  color: rgba(160, 163, 189, 0.5) !important;
+}
+
+.admin-isolated-theme input:focus,
+.admin-isolated-theme select:focus,
+.admin-isolated-theme textarea:focus {
+  border-color: var(--purple-500) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(124, 92, 252, 0.2) !important;
+}
+
+.admin-isolated-theme option {
+  background-color: var(--navy-600) !important;
+  color: var(--white) !important;
+}
+
+/* ─── 6. TABLES & DATA GRIDS ─── */
+.admin-isolated-theme table {
+  background-color: var(--navy-600) !important;
+  border-collapse: collapse;
+}
+
+.admin-isolated-theme thead tr,
+.admin-isolated-theme tr[class*="bg-[#F7F6FF]"] {
+  background-color: var(--navy-500) !important;
+}
+
+.admin-isolated-theme th {
+  color: var(--lavender-400) !important;
+  border-bottom: 1px solid var(--indigo-line) !important;
+}
+
+.admin-isolated-theme td {
+  color: var(--white) !important;
+  border-bottom: 1px solid var(--indigo-line) !important;
+}
+
+.admin-isolated-theme tbody tr:hover {
+  background-color: rgba(38, 42, 82, 0.4) !important;
+}
+
+/* ─── 7. BUTTONS ─── */
+.admin-isolated-theme button[class*="bg-[#FF6B35]"],
+.admin-isolated-theme button[class*="bg-[#2D2380]"],
+.admin-isolated-theme button[class*="bg-[var(--purple-500)]"],
+.admin-isolated-theme button[class*="bg-[#7C5CFC]"] {
+  color: var(--white) !important;
+}
+
+/* ─── 8. SWEETALERT & CUSTOM SCROLLBARS ─── */
+.swal2-container {
+  z-index: 99999 !important;
+}
+
+.swal2-popup {
+  background: var(--navy-600) !important;
+  color: var(--white) !important;
+  border: 1px solid var(--indigo-line) !important;
+  border-radius: 16px !important;
+}
+
+.swal2-title,
+.swal2-html-container {
+  color: var(--white) !important;
+}
+
+.admin-isolated-theme ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.admin-isolated-theme ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-isolated-theme ::-webkit-scrollbar-thumb {
+  background-color: rgba(122, 126, 156, 0.25);
+  border-radius: 10px;
+}
+
+.admin-isolated-theme ::-webkit-scrollbar-thumb:hover {
+  background-color: var(--purple-500);
+}

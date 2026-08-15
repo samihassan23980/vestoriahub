@@ -1,0 +1,257 @@
+@import "tailwindcss";
+
+:root {
+  /* ─── VESTORIAHUB BRAND COLOR PALETTE ─── */
+  /* Deep Forest Green (Primary Brand & Structure) */
+  --forest-950: #0B1612;
+  --forest-900: #10201B;
+  --forest-800: #162B24;
+  --forest-700: #1C352D; /* Primary Brand Base */
+  --forest-600: #25473C;
+  --forest-500: #315C4F;
+  --forest-400: #427867;
+
+  /* Charcoal Ink (Typography & High-Contrast Accents) */
+  --charcoal-950: #0D1613;
+  --charcoal-900: #16241F; /* Primary Typography */
+  --charcoal-800: #20332C;
+  --charcoal-700: #2D443B;
+
+  /* Warm Cream & Canvas Surfaces */
+  --cream-base: #F8F0E5;   /* Primary Background */
+  --cream-surface: #FDFBF7; /* Off-White Surfaces / Card Canvas */
+  --cream-alt: #F1E7D8;
+
+  /* Sage Mint (Borders, Chips & Subtle Accents) */
+  --sage-100: #EEF4F0;
+  --sage-200: #D5E4D9;
+  --sage-300: #BDD6C4;
+  --sage-400: #A8C3B0; /* Core Sage Mint */
+  --sage-500: #8EAD97;
+
+  /* Accent & Conversion Triggers */
+  --gold-500: #D9A441; /* Savings Gold */
+  --gold-600: #BE8E34;
+  --red-500: #C1432F;  /* Deal Red / Urgency */
+  --red-600: #A83624;
+
+  /* Neutral Utility */
+  --grey-muted: #8A8F8C; /* Placeholder & Disabled States */
+  --border-subtle: #E2D9CC;
+
+  /* ─── BASE LAYOUT DEFAULTS (VESTORIAHUB WARM CANVAS) ─── */
+  --background: var(--cream-base);
+  --foreground: var(--charcoal-900);
+}
+
+/* ─── TAILWIND V4 THEME CONFIGURATION ─── */
+@theme inline {
+  /* Core Canvas & Text */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  /* Semantic UI Surfaces */
+  --color-surface: var(--cream-surface);
+  --color-surface-alt: var(--cream-alt);
+  --color-border: var(--border-subtle);
+  --color-border-sage: var(--sage-400);
+
+  /* Semantic Text */
+  --color-text-primary: var(--charcoal-900);
+  --color-text-secondary: var(--forest-600);
+  --color-text-muted: var(--grey-muted);
+
+  /* Primary Brand Utilities */
+  --color-primary: var(--forest-700);
+  --color-primary-hover: var(--forest-800);
+  --color-secondary: var(--sage-400);
+
+  /* Action & Urgency Accents */
+  --color-accent-gold: var(--gold-500);
+  --color-accent-gold-hover: var(--gold-600);
+  --color-accent-red: var(--red-500);
+  --color-accent-red-hover: var(--red-600);
+
+  /* ─── PROFESSIONAL FONT FAMILY STACKS & FALLBACKS ─── */
+  --font-heading: var(--font-outfit), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-sans: var(--font-jakarta), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+/* ─── GLOBAL RESET & LCP/SEO OPTIMIZATIONS ─── */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  
+  /* Text rendering optimizations */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  
+  /* Modern clean body tracking */
+  letter-spacing: -0.01em;
+
+  /* Prevent horizontal layout shifts (Improves CLS) */
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* ─── TYPOGRAPHY HIERARCHY ─── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  color: var(--forest-700);
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+p {
+  color: var(--charcoal-900);
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+code, kbd, samp, pre {
+  font-family: var(--font-mono);
+}
+
+/* ─── ACCESSIBILITY & SELECTION ─── */
+::selection {
+  background-color: var(--forest-700);
+  color: var(--cream-base);
+}
+::-moz-selection {
+  background-color: var(--forest-700);
+  color: var(--cream-base);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ─── CUSTOM SCROLLBAR ─── */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--sage-400);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: var(--forest-700);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ─── ADMIN PANEL ISOLATION (DEEP FOREST SECURE SUITE) ─── */
+.admin-isolated-theme {
+  --background: #10201B !important;
+  --foreground: #F8F0E5 !important;
+  --color-surface: #16241F !important;
+  --color-border: #25473C !important;
+
+  background-color: #10201B !important;
+  color: #F8F0E5 !important;
+}
+
+/* Hardcoded light surfaces override inside admin */
+.admin-isolated-theme .bg-white,
+.admin-isolated-theme [class*="bg-white"],
+.admin-isolated-theme .bg-neutral-50,
+.admin-isolated-theme .bg-gray-50,
+.admin-isolated-theme [class*="bg-[#"] {
+  background-color: #16241F !important;
+  border-color: #25473C !important;
+}
+
+.admin-isolated-theme .min-h-screen,
+.admin-isolated-theme .bg-gray-100 {
+  background-color: #10201B !important;
+}
+
+/* Admin Headings & High Contrast Text */
+.admin-isolated-theme h1,
+.admin-isolated-theme h2,
+.admin-isolated-theme h3,
+.admin-isolated-theme h4,
+.admin-isolated-theme h5,
+.admin-isolated-theme h6,
+.admin-isolated-theme .text-neutral-900,
+.admin-isolated-theme .text-gray-900 {
+  color: #F8F0E5 !important;
+}
+
+/* Admin Subtext & Secondary Labels */
+.admin-isolated-theme p,
+.admin-isolated-theme span:not([class*="bg-"]),
+.admin-isolated-theme td,
+.admin-isolated-theme th,
+.admin-isolated-theme .text-gray-500 {
+  color: #A8C3B0 !important;
+}
+
+/* Admin Forms & Tables */
+.admin-isolated-theme input,
+.admin-isolated-theme select,
+.admin-isolated-theme textarea {
+  background-color: #10201B !important;
+  border-color: #25473C !important;
+  color: #F8F0E5 !important;
+}
+
+.admin-isolated-theme input::placeholder,
+.admin-isolated-theme textarea::placeholder {
+  color: #8A8F8C !important;
+}
+
+.admin-isolated-theme border-collapse,
+.admin-isolated-theme .divide-y {
+  border-color: #25473C !important;
+}
+
+.admin-isolated-theme thead tr {
+  background-color: #1C352D !important;
+}
+
+.admin-isolated-theme tr:hover {
+  background-color: rgba(37, 71, 60, 0.4) !important;
+}
+
+/* Admin Buttons */
+.admin-isolated-theme button[class*="border"] {
+  border-color: #25473C !important;
+  color: #F8F0E5 !important;
+}
+
+.admin-isolated-theme button[class*="border"]:hover {
+  background-color: #1C352D !important;
+}
