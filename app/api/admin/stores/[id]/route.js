@@ -47,15 +47,15 @@ function getOptionalAuditUserId(req) {
 
 function applyStorePopulates(query) {
   query
-    .populate("primaryCategoryId", "name slug")
-    .populate("subCategoryIds", "name slug")
-    .populate("countryId", "name code status")
-    .populate("affiliateNetworkId", "name slug status");
+    .populate("primaryCategoryId", "_id name slug")
+    .populate("subCategoryIds", "_id name slug")
+    .populate("countryId", "_id name code status")
+    .populate("affiliateNetworkId", "_id name slug status");
 
   if (mongoose.models.User) {
     query
-      .populate("createdBy", "name email")
-      .populate("updatedBy", "name email");
+      .populate("createdBy", "_id name email")
+      .populate("updatedBy", "_id name email");
   }
 
   return query;
@@ -73,12 +73,12 @@ function sanitizeStoreUpdatePayload(body = {}) {
   }
 
   if ("primaryCategoryId" in body) {
-    payload.primaryCategoryId = body.primaryCategoryId;
+    payload.primaryCategoryId = normalizeNullableObjectId(body.primaryCategoryId);
   }
 
   if ("subCategoryIds" in body) {
     payload.subCategoryIds = Array.isArray(body.subCategoryIds)
-      ? [...new Set(body.subCategoryIds.filter(Boolean))].slice(0, 10)
+      ? [...new Set(body.subCategoryIds.map(String).filter(isValidObjectId))].slice(0, 10)
       : [];
   }
 

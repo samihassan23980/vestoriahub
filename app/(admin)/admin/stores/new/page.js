@@ -7,6 +7,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import MediaUploader from "@/app/Components/media/MediaUploader";
+import TextEditor from "../../editor/page";
 import {
   ArrowLeft,
   Save,
@@ -26,6 +27,7 @@ import {
   Trash2,
   AlertCircle,
   CheckCircle,
+  Type,
 } from "lucide-react";
 
 const EMPTY_FORM_DATA = {
@@ -214,7 +216,6 @@ const NewStoreEditor = () => {
   const [formData, setFormData] = useState(EMPTY_FORM_DATA);
 
   // ─── MEDIA MODE STATE ────────────────────────────────────────────────────
-  // link = manual URL input, upload = MediaUploader
   const [mediaMode, setMediaMode] = useState({
     logo: "link",
     thumb: "link",
@@ -236,12 +237,6 @@ const NewStoreEditor = () => {
           fetchReference("/api/admin/countries?limit=250"),
         ]);
 
-      console.log("Reference Data Results:", {
-        categoryResult,
-        networkResult,
-        countryResult,
-      });
-
       if (!mounted) return;
 
       const failed = [];
@@ -260,8 +255,6 @@ const NewStoreEditor = () => {
           ],
           "Unnamed Category",
         );
-
-        console.log("Normalized Categories:", normalizedCategories);
         setCategories(normalizedCategories);
       } else {
         console.error("Categories API failed:", categoryResult.reason);
@@ -285,8 +278,6 @@ const NewStoreEditor = () => {
           ],
           "Unnamed Network",
         );
-
-        console.log("Normalized Networks:", normalizedNetworks);
         setNetworks(normalizedNetworks);
       } else {
         console.error("Affiliate networks API failed:", networkResult.reason);
@@ -308,8 +299,6 @@ const NewStoreEditor = () => {
           ],
           "Unnamed Country",
         );
-
-        console.log("Normalized Countries:", normalizedCountries);
         setCountries(normalizedCountries);
       } else {
         console.error("Countries API failed:", countryResult.reason);
@@ -396,9 +385,6 @@ const NewStoreEditor = () => {
           ...prev.images,
           [type]: {
             ...currentImage,
-
-            // Store schema currently saves url + alt.
-            // Extra metadata can stay in form state safely.
             galleryId,
             url,
             publicId,
@@ -420,7 +406,6 @@ const NewStoreEditor = () => {
       images: {
         ...prev.images,
         [type]: {
-          // Manual URL mode keeps schema clean and clears upload metadata.
           url: value,
           alt: prev.images[type]?.alt || "",
         },
@@ -750,7 +735,7 @@ const NewStoreEditor = () => {
     const mode = mediaMode[type] || "link";
 
     return (
-      <div className={withBorder ? "pt-3 border-t border-[#E0DEF5]" : ""}>
+      <div className={withBorder ? "pt-4 border-t border-[#E0DEF5]" : ""}>
         <div className="flex items-center justify-between mb-2">
           <label className="block text-[12px] font-bold text-[#7775A0] uppercase">
             {label}
@@ -783,7 +768,7 @@ const NewStoreEditor = () => {
           </div>
 
           <div className="flex-1 min-w-0 space-y-3">
-            <div className="grid grid-cols-2 gap-2 rounded-lg bg-[#F7F6FF] border border-[#E0DEF5] p-1">
+            <div className="grid grid-cols-2 gap-2 rounded-lg bg-[#F7F6FF] border border-[#E0DEF5] p-1 max-w-xs">
               <button
                 type="button"
                 onClick={() =>
@@ -823,7 +808,7 @@ const NewStoreEditor = () => {
               <div className="rounded-lg border border-[#E0DEF5] bg-[#F7F6FF] p-3">
                 <MediaUploader
                   label={`Upload ${label}`}
-                  value={image}
+                  value={image.url ? [image] : []}
                   onChange={(uploadedImage) =>
                     handleUploaderImageChange(type, uploadedImage)
                   }
@@ -854,7 +839,7 @@ const NewStoreEditor = () => {
               type="text"
               value={image.alt || ""}
               onChange={(e) => handleImageChange(type, "alt", e.target.value)}
-              placeholder={`${label} alt text`}
+              placeholder={`${label} alt text (for SEO)`}
               maxLength={200}
               className="w-full px-3 py-2 bg-white border border-[#E0DEF5] rounded-md text-[13px] outline-none focus:border-[#2D2380]"
             />
@@ -866,10 +851,10 @@ const NewStoreEditor = () => {
 
   return (
     <div className="min-h-screen bg-[#F7F6FF] p-6 md:p-8">
-      <div className="max-w-[1200px] mx-auto">
+      <div className="max-w-[1280px] mx-auto">
         <form onSubmit={handleSubmit}>
-          {/* ─── HEADER ─── */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          {/* ─── STICKY / STANDARD HEADER ─── */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 sticky top-0 z-20 bg-[#F7F6FF]/90 backdrop-blur-md py-4 border-b border-[#E0DEF5]/50">
             <div className="flex items-center gap-4">
               <Link
                 href="/admin/stores"
@@ -882,7 +867,7 @@ const NewStoreEditor = () => {
                   <Store size={24} className="text-[#F4A836]" /> Add New Store
                 </h1>
                 <p className="text-[#7775A0] text-[14px]">
-                  Configure brand identity, affiliate routing, and SEO content.
+                  Configure brand identity, affiliate routing, editorial content, and SEO.
                 </p>
               </div>
             </div>
@@ -918,348 +903,74 @@ const NewStoreEditor = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-            {/* ─── LEFT COLUMN (Main Data - Spans 2) ─── */}
-            <div className="xl:col-span-2 space-y-6">
-              {/* Identity Box */}
-              <div className="bg-white border border-[#E0DEF5] rounded-xl p-6 shadow-sm space-y-5">
-                <h2 className="text-[16px] font-bold text-[#1A1340] flex items-center gap-2 border-b border-[#E0DEF5] pb-4">
-                  <Store size={18} className="text-[#2D2380]" /> Brand Identity
-                </h2>
+          {/* ─── SINGLE COLUMN FULL-WIDTH FORM LAYOUT ─── */}
+          <div className="space-y-6">
+            {/* 1. Brand Identity */}
+            <div className="bg-white border border-[#E0DEF5] rounded-xl p-6 shadow-sm space-y-5">
+              <h2 className="text-[16px] font-bold text-[#1A1340] flex items-center gap-2 border-b border-[#E0DEF5] pb-4">
+                <Store size={18} className="text-[#2D2380]" /> Brand Identity
+              </h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[13px] font-semibold text-[#1A1340] mb-1.5">
-                      Store Name <span className="text-[#E24B4A]">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleBasicChange}
-                      onBlur={generateSlug}
-                      placeholder="e.g. Amazon, Nike"
-                      maxLength={140}
-                      required
-                      className="w-full px-4 py-2.5 bg-white border-[1.5px] border-[#E0DEF5] rounded-lg text-[14px] text-[#1A1340] focus:border-[#2D2380] outline-none transition-all"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[13px] font-semibold text-[#1A1340] mb-1.5">
-                      URL Slug <span className="text-[#E24B4A]">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="slug"
-                      value={formData.slug}
-                      onChange={handleBasicChange}
-                      placeholder="e.g. amazon"
-                      maxLength={160}
-                      required
-                      className="w-full px-4 py-2.5 bg-[#F7F6FF] border-[1.5px] border-[#E0DEF5] rounded-lg text-[14px] text-[#7775A0] focus:border-[#2D2380] outline-none lowercase"
-                    />
-                  </div>
-                </div>
-
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[13px] font-semibold text-[#1A1340] mb-1.5">
-                    Official Website URL{" "}
-                    <span className="text-[#E24B4A]">*</span>
-                  </label>
-                  <p className="text-[11px] text-[#7775A0] mb-2">
-                    The store&apos;s real homepage (NOT your affiliate link).
-                  </p>
-                  <input
-                    type="url"
-                    name="officialUrl"
-                    value={formData.officialUrl}
-                    onChange={handleBasicChange}
-                    placeholder="https://www.store.com"
-                    required
-                    className="w-full px-4 py-2.5 bg-white border-[1.5px] border-[#E0DEF5] rounded-lg text-[14px] text-[#1A1340] focus:border-[#2D2380] outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* Tracking & Affiliate Config */}
-              <div className="bg-white border border-[#E0DEF5] rounded-xl p-6 shadow-sm space-y-5">
-                <h2 className="text-[16px] font-bold text-[#1A1340] flex items-center gap-2 border-b border-[#E0DEF5] pb-4">
-                  <LinkIcon size={18} className="text-[#2D2380]" /> Affiliate
-                  Routing
-                </h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[13px] font-semibold text-[#1A1340] mb-1.5">
-                      Affiliate Network
-                    </label>
-                    <select
-                      name="affiliateNetworkId"
-                      value={formData.affiliateNetworkId}
-                      onChange={handleBasicChange}
-                      className="w-full px-4 py-2.5 bg-[#F7F6FF] border border-[#E0DEF5] rounded-lg text-[14px] outline-none focus:border-[#2D2380]"
-                    >
-                      <option value="">
-                        {isReferenceLoading
-                          ? "Loading networks..."
-                          : "Direct / In-House"}
-                      </option>
-                      {networks.map((network) => (
-                        <option key={network._id} value={network._id}>
-                          {network.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[13px] font-semibold text-[#1A1340] mb-1.5">
-                      Default SubID
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.tracking.defaultSubid}
-                      onChange={(e) =>
-                        handleNestedChange(
-                          "tracking",
-                          "defaultSubid",
-                          e.target.value,
-                        )
-                      }
-                      placeholder="e.g. dealverse-nike"
-                      maxLength={100}
-                      className="w-full px-4 py-2.5 bg-white border-[1.5px] border-[#E0DEF5] rounded-lg text-[14px] text-[#1A1340] focus:border-[#2D2380] outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[13px] font-semibold text-[#1A1340] mb-1.5">
-                    Master Tracking Link{" "}
-                    <span className="text-[#7775A0] font-normal">
-                      (Optional if network template handles it)
-                    </span>
-                  </label>
-                  <input
-                    type="url"
-                    value={formData.tracking.trackingLink}
-                    onChange={(e) =>
-                      handleNestedChange(
-                        "tracking",
-                        "trackingLink",
-                        e.target.value,
-                      )
-                    }
-                    placeholder="https://track.awin.com/awc/12345?clickref={subId}"
-                    className="w-full px-4 py-2.5 bg-[#F7F6FF] border-[1.5px] border-[#E0DEF5] rounded-lg text-[14px] text-[#2D2380] focus:border-[#2D2380] outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* Editorial Content */}
-              <div className="bg-white border border-[#E0DEF5] rounded-xl p-6 shadow-sm space-y-5">
-                <h2 className="text-[16px] font-bold text-[#1A1340] flex items-center gap-2 border-b border-[#E0DEF5] pb-4">
-                  <FileText size={18} className="text-[#2D2380]" /> SEO &
-                  Editorial Copy
-                </h2>
-
-                <div>
-                  <label className="block text-[13px] font-semibold text-[#1A1340] mb-1.5">
-                    Store Page H1 Heading (Overrides Name)
+                    Store Name <span className="text-[#E24B4A]">*</span>
                   </label>
                   <input
                     type="text"
-                    value={formData.content.heading}
-                    onChange={(e) =>
-                      handleNestedChange("content", "heading", e.target.value)
-                    }
-                    placeholder="e.g. Nike Promo Codes & Deals"
-                    maxLength={200}
-                    className="w-full px-4 py-2.5 bg-white border-[1.5px] border-[#E0DEF5] rounded-lg text-[14px] focus:border-[#2D2380] outline-none"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleBasicChange}
+                    onBlur={generateSlug}
+                    placeholder="e.g. Amazon, Nike, Walmart"
+                    maxLength={140}
+                    required
+                    className="w-full px-4 py-2.5 bg-white border-[1.5px] border-[#E0DEF5] rounded-lg text-[14px] text-[#1A1340] focus:border-[#2D2380] outline-none transition-all"
                   />
                 </div>
-
                 <div>
                   <label className="block text-[13px] font-semibold text-[#1A1340] mb-1.5">
-                    Short Description
+                    URL Slug <span className="text-[#E24B4A]">*</span>
                   </label>
-                  <textarea
-                    value={formData.content.shortDescription}
-                    onChange={(e) =>
-                      handleNestedChange(
-                        "content",
-                        "shortDescription",
-                        e.target.value,
-                      )
-                    }
-                    placeholder="1-2 sentences summarizing the brand for search results..."
-                    rows={2}
-                    maxLength={500}
-                    className="w-full px-4 py-2.5 bg-white border-[1.5px] border-[#E0DEF5] rounded-lg text-[14px] focus:border-[#2D2380] outline-none resize-none"
+                  <input
+                    type="text"
+                    name="slug"
+                    value={formData.slug}
+                    onChange={handleBasicChange}
+                    placeholder="e.g. amazon"
+                    maxLength={160}
+                    required
+                    className="w-full px-4 py-2.5 bg-[#F7F6FF] border-[1.5px] border-[#E0DEF5] rounded-lg text-[14px] text-[#7775A0] focus:border-[#2D2380] outline-none lowercase font-mono"
                   />
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-[13px] font-semibold text-[#1A1340]">
-                      Long SEO Description
-                    </label>
-                    <span className="text-[11px] text-[#7775A0] bg-[#EEEDFE] px-2 py-0.5 rounded font-bold">
-                      Rich Text Allowed
-                    </span>
-                  </div>
-                  <textarea
-                    value={formData.content.longDescription}
-                    onChange={(e) =>
-                      handleNestedChange(
-                        "content",
-                        "longDescription",
-                        e.target.value,
-                      )
-                    }
-                    placeholder="Comprehensive store review, shopping tips, and saving guides..."
-                    rows={6}
-                    maxLength={15000}
-                    className="w-full px-4 py-2.5 bg-[#1A1340] border-[1.5px] border-[#1A1340] rounded-lg text-[13px] font-mono text-[#F7F6FF] focus:border-[#2D2380] outline-none resize-y"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[13px] font-semibold text-[#1A1340] mb-1.5">
-                    &quot;Why Shop Here?&quot; (Trust Copy)
-                  </label>
-                  <textarea
-                    value={formData.content.whyShop}
-                    onChange={(e) =>
-                      handleNestedChange("content", "whyShop", e.target.value)
-                    }
-                    placeholder="Bullet points on why users should choose this store..."
-                    rows={3}
-                    maxLength={3000}
-                    className="w-full px-4 py-2.5 bg-white border-[1.5px] border-[#E0DEF5] rounded-lg text-[14px] focus:border-[#2D2380] outline-none resize-y"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-[#E0DEF5]">
-                  <div>
-                    <label className="block text-[13px] font-semibold text-[#1A1340] mb-1.5 flex items-center gap-1.5">
-                      <ShieldCheck size={14} /> Shipping Policy
-                    </label>
-                    <textarea
-                      value={formData.policy.shippingInfo}
-                      onChange={(e) =>
-                        handleNestedChange(
-                          "policy",
-                          "shippingInfo",
-                          e.target.value,
-                        )
-                      }
-                      placeholder="e.g. Free shipping on orders over $50."
-                      rows={2}
-                      maxLength={2000}
-                      className="w-full px-4 py-2.5 bg-white border-[1.5px] border-[#E0DEF5] rounded-lg text-[14px] focus:border-[#2D2380] outline-none resize-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[13px] font-semibold text-[#1A1340] mb-1.5 flex items-center gap-1.5">
-                      <ShieldCheck size={14} /> Return Policy
-                    </label>
-                    <textarea
-                      value={formData.policy.returnRefundPolicy}
-                      onChange={(e) =>
-                        handleNestedChange(
-                          "policy",
-                          "returnRefundPolicy",
-                          e.target.value,
-                        )
-                      }
-                      placeholder="e.g. 30-day hassle-free returns."
-                      rows={2}
-                      maxLength={2000}
-                      className="w-full px-4 py-2.5 bg-white border-[1.5px] border-[#E0DEF5] rounded-lg text-[14px] focus:border-[#2D2380] outline-none resize-none"
-                    />
-                  </div>
                 </div>
               </div>
 
-              {/* FAQ Builder */}
-              <div className="bg-white border border-[#E0DEF5] rounded-xl p-6 shadow-sm space-y-4">
-                <div className="flex items-center justify-between mb-2 border-b border-[#E0DEF5] pb-4">
-                  <div className="flex items-center gap-2">
-                    <MessageCircleQuestion
-                      size={18}
-                      className="text-[#2D2380]"
-                    />
-                    <h2 className="text-[16px] font-bold text-[#1A1340]">
-                      Structured FAQs (JSON-LD)
-                    </h2>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={addFaq}
-                    disabled={formData.faqs.length >= 20}
-                    className="flex items-center gap-1.5 text-[#2D2380] font-bold text-[13px] hover:text-[#FF6B35] disabled:opacity-50 transition-colors"
-                  >
-                    <Plus size={16} /> Add FAQ ({formData.faqs.length}/20)
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  {formData.faqs.length === 0 ? (
-                    <p className="text-center py-6 text-[#7775A0] text-[13px] italic border-2 border-dashed border-[#F7F6FF] rounded-lg">
-                      No FAQs added. Add some to generate SEO rich snippets.
-                    </p>
-                  ) : (
-                    formData.faqs.map((faq, idx) => (
-                      <div
-                        key={idx}
-                        className="p-4 bg-[#F7F6FF] border border-[#E0DEF5] rounded-xl relative group"
-                      >
-                        <button
-                          type="button"
-                          onClick={() => removeFaq(idx)}
-                          className="absolute top-4 right-4 text-[#7775A0] hover:text-[#E24B4A] transition-all"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                        <div className="space-y-3 pr-8">
-                          <input
-                            type="text"
-                            placeholder="Question..."
-                            value={faq.question}
-                            onChange={(e) =>
-                              updateFaq(idx, "question", e.target.value)
-                            }
-                            maxLength={200}
-                            required
-                            className="w-full px-3 py-2 bg-white border border-[#E0DEF5] rounded-md text-[14px] font-bold focus:border-[#2D2380] outline-none"
-                          />
-                          <textarea
-                            placeholder="Answer..."
-                            value={faq.answer}
-                            onChange={(e) =>
-                              updateFaq(idx, "answer", e.target.value)
-                            }
-                            maxLength={1200}
-                            required
-                            className="w-full px-3 py-2 bg-white border border-[#E0DEF5] rounded-md text-[13px] focus:border-[#2D2380] outline-none resize-y min-h-[60px]"
-                          />
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
+              <div>
+                <label className="block text-[13px] font-semibold text-[#1A1340] mb-1.5">
+                  Official Website URL <span className="text-[#E24B4A]">*</span>
+                </label>
+                <p className="text-[11px] text-[#7775A0] mb-2">
+                  The store&apos;s clean homepage URL (used for schema markup and clean profile views).
+                </p>
+                <input
+                  type="url"
+                  name="officialUrl"
+                  value={formData.officialUrl}
+                  onChange={handleBasicChange}
+                  placeholder="https://www.nike.com"
+                  required
+                  className="w-full px-4 py-2.5 bg-white border-[1.5px] border-[#E0DEF5] rounded-lg text-[14px] text-[#1A1340] focus:border-[#2D2380] outline-none"
+                />
               </div>
             </div>
 
-            {/* ─── RIGHT COLUMN (Settings & Media - Spans 1) ─── */}
-            <div className="space-y-6">
-              {/* Taxonomy & Geo */}
-              <div className="bg-white border border-[#E0DEF5] rounded-xl p-6 shadow-sm space-y-4">
-                <h2 className="text-[16px] font-bold text-[#1A1340] flex items-center gap-2 border-b border-[#E0DEF5] pb-3">
-                  <Settings size={18} className="text-[#2D2380]" />{" "}
-                  Classification
-                </h2>
+            {/* 2. Taxonomy & Geo Classification */}
+            <div className="bg-white border border-[#E0DEF5] rounded-xl p-6 shadow-sm space-y-4">
+              <h2 className="text-[16px] font-bold text-[#1A1340] flex items-center gap-2 border-b border-[#E0DEF5] pb-3">
+                <Settings size={18} className="text-[#2D2380]" /> Taxonomy & Geo Classification
+              </h2>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[13px] font-semibold text-[#1A1340] mb-1.5">
                     Primary Category <span className="text-[#E24B4A]">*</span>
@@ -1285,49 +996,6 @@ const NewStoreEditor = () => {
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-[13px] font-semibold text-[#1A1340]">
-                      Secondary Categories
-                    </label>
-                    <span className="text-[10px] text-[#7775A0] bg-[#EEEDFE] px-2 rounded font-bold">
-                      {formData.subCategoryIds.length}/10
-                    </span>
-                  </div>
-                  <div className="max-h-[120px] overflow-y-auto border border-[#E0DEF5] rounded-lg p-2 space-y-1">
-                    {categories.length === 0 ? (
-                      <p className="text-[12px] text-[#7775A0] px-1.5 py-2">
-                        {isReferenceLoading
-                          ? "Loading categories..."
-                          : "No categories found."}
-                      </p>
-                    ) : (
-                      categories.map((category) => (
-                        <label
-                          key={category._id}
-                          className="flex items-center gap-2 p-1.5 hover:bg-[#F7F6FF] rounded cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={formData.subCategoryIds.includes(
-                              category._id,
-                            )}
-                            onChange={() => toggleSubCategory(category._id)}
-                            disabled={
-                              !formData.subCategoryIds.includes(category._id) &&
-                              formData.subCategoryIds.length >= 10
-                            }
-                            className="accent-[#2D2380]"
-                          />
-                          <span className="text-[12px] text-[#1A1340]">
-                            {category.name}
-                          </span>
-                        </label>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                <div className="pt-2">
                   <label className="block text-[13px] font-semibold text-[#1A1340] mb-1.5">
                     Target Country <span className="text-[#E24B4A]">*</span>
                   </label>
@@ -1347,14 +1015,357 @@ const NewStoreEditor = () => {
                 </div>
               </div>
 
-              {/* Visibility */}
-              <div className="bg-white border border-[#E0DEF5] rounded-xl p-6 shadow-sm space-y-4">
-                <h2 className="text-[16px] font-bold text-[#1A1340] flex items-center gap-2 border-b border-[#E0DEF5] pb-3 mb-2">
-                  <Globe size={18} className="text-[#2D2380]" /> Publishing
-                  Settings
-                </h2>
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-[13px] font-semibold text-[#1A1340]">
+                    Secondary Categories (Max 10)
+                  </label>
+                  <span className="text-[10px] text-[#7775A0] bg-[#EEEDFE] px-2 py-0.5 rounded font-bold">
+                    {formData.subCategoryIds.length}/10 Selected
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-[180px] overflow-y-auto border border-[#E0DEF5] rounded-lg p-3 bg-white">
+                  {categories.length === 0 ? (
+                    <p className="text-[12px] text-[#7775A0] py-2 col-span-full text-center italic">
+                      {isReferenceLoading
+                        ? "Loading categories..."
+                        : "No categories found."}
+                    </p>
+                  ) : (
+                    categories.map((category) => {
+                      const isChecked = formData.subCategoryIds.includes(category._id);
+                      const isDisabled = !isChecked && formData.subCategoryIds.length >= 10;
+                      return (
+                        <label
+                          key={category._id}
+                          className={`flex items-center gap-2 p-2 rounded-lg border text-[12px] transition-colors cursor-pointer ${
+                            isChecked
+                              ? "bg-[#EEEDFE] border-[#2D2380] text-[#2D2380] font-bold"
+                              : isDisabled
+                              ? "opacity-50 cursor-not-allowed border-[#E0DEF5] bg-[#F7F6FF]"
+                              : "border-[#E0DEF5] bg-white hover:bg-[#F7F6FF] text-[#1A1340]"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => toggleSubCategory(category._id)}
+                            disabled={isDisabled}
+                            className="accent-[#2D2380] rounded"
+                          />
+                          <span className="truncate">{category.name}</span>
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Tracking & Affiliate Routing */}
+            <div className="bg-white border border-[#E0DEF5] rounded-xl p-6 shadow-sm space-y-5">
+              <h2 className="text-[16px] font-bold text-[#1A1340] flex items-center gap-2 border-b border-[#E0DEF5] pb-4">
+                <LinkIcon size={18} className="text-[#2D2380]" /> Affiliate Routing & Tracking
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[13px] font-semibold text-[#1A1340] mb-1.5">
+                    Affiliate Network
+                  </label>
+                  <select
+                    name="affiliateNetworkId"
+                    value={formData.affiliateNetworkId}
+                    onChange={handleBasicChange}
+                    className="w-full px-4 py-2.5 bg-[#F7F6FF] border border-[#E0DEF5] rounded-lg text-[14px] outline-none focus:border-[#2D2380]"
+                  >
+                    <option value="">
+                      {isReferenceLoading
+                        ? "Loading networks..."
+                        : "Direct / In-House"}
+                    </option>
+                    {networks.map((network) => (
+                      <option key={network._id} value={network._id}>
+                        {network.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[13px] font-semibold text-[#1A1340] mb-1.5">
+                    Default SubID / Campaign Tag
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.tracking.defaultSubid}
+                    onChange={(e) =>
+                      handleNestedChange(
+                        "tracking",
+                        "defaultSubid",
+                        e.target.value,
+                      )
+                    }
+                    placeholder="e.g. dealverse-store"
+                    maxLength={100}
+                    className="w-full px-4 py-2.5 bg-white border-[1.5px] border-[#E0DEF5] rounded-lg text-[14px] text-[#1A1340] focus:border-[#2D2380] outline-none font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[13px] font-semibold text-[#1A1340] mb-1.5">
+                  Master Tracking Link{" "}
+                  <span className="text-[#7775A0] font-normal">
+                    (Optional fallback if individual coupon lacks specific affiliate link)
+                  </span>
+                </label>
+                <input
+                  type="url"
+                  value={formData.tracking.trackingLink}
+                  onChange={(e) =>
+                    handleNestedChange(
+                      "tracking",
+                      "trackingLink",
+                      e.target.value,
+                    )
+                  }
+                  placeholder="https://track.awin.com/awc/12345?clickref={subId}"
+                  className="w-full px-4 py-2.5 bg-[#F7F6FF] border-[1.5px] border-[#E0DEF5] rounded-lg text-[14px] text-[#2D2380] focus:border-[#2D2380] outline-none font-mono"
+                />
+              </div>
+            </div>
+
+            {/* 4. Editorial Copy & Rich Content */}
+            <div className="bg-white border border-[#E0DEF5] rounded-xl p-6 shadow-sm space-y-5">
+              <h2 className="text-[16px] font-bold text-[#1A1340] flex items-center gap-2 border-b border-[#E0DEF5] pb-4">
+                <FileText size={18} className="text-[#2D2380]" /> Editorial Copy & Page Headers
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[13px] font-semibold text-[#1A1340] mb-1.5">
+                    Store Page H1 Headline
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.content.heading}
+                    onChange={(e) =>
+                      handleNestedChange("content", "heading", e.target.value)
+                    }
+                    placeholder="e.g. Nike Promo Codes, Coupons & Discounts"
+                    maxLength={200}
+                    className="w-full px-4 py-2.5 bg-white border-[1.5px] border-[#E0DEF5] rounded-lg text-[14px] focus:border-[#2D2380] outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[13px] font-semibold text-[#1A1340] mb-1.5">
+                    Short Summary (Teaser / Search Card)
+                  </label>
+                  <textarea
+                    value={formData.content.shortDescription}
+                    onChange={(e) =>
+                      handleNestedChange(
+                        "content",
+                        "shortDescription",
+                        e.target.value,
+                      )
+                    }
+                    placeholder="1-2 sentences summarizing the store for search snippet results..."
+                    rows={2}
+                    maxLength={500}
+                    className="w-full px-4 py-2 bg-white border-[1.5px] border-[#E0DEF5] rounded-lg text-[13px] focus:border-[#2D2380] outline-none resize-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[13px] font-semibold text-[#1A1340] mb-1.5">
+                  &quot;Why Shop Here?&quot; (Trust & Key Selling Points)
+                </label>
+                <textarea
+                  value={formData.content.whyShop}
+                  onChange={(e) =>
+                    handleNestedChange("content", "whyShop", e.target.value)
+                  }
+                  placeholder="Key brand benefits, rewards program perks, price matching, warranty..."
+                  rows={3}
+                  maxLength={3000}
+                  className="w-full px-4 py-2.5 bg-white border-[1.5px] border-[#E0DEF5] rounded-lg text-[14px] focus:border-[#2D2380] outline-none resize-y"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-[#E0DEF5]">
+                <div>
+                  <label className="block text-[13px] font-semibold text-[#1A1340] mb-1.5 flex items-center gap-1.5">
+                    <ShieldCheck size={14} className="text-[#22B07D]" /> Shipping Policy Summary
+                  </label>
+                  <textarea
+                    value={formData.policy.shippingInfo}
+                    onChange={(e) =>
+                      handleNestedChange(
+                        "policy",
+                        "shippingInfo",
+                        e.target.value,
+                      )
+                    }
+                    placeholder="e.g. Free standard shipping on orders over $50."
+                    rows={2}
+                    maxLength={2000}
+                    className="w-full px-4 py-2 bg-white border-[1.5px] border-[#E0DEF5] rounded-lg text-[13px] focus:border-[#2D2380] outline-none resize-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[13px] font-semibold text-[#1A1340] mb-1.5 flex items-center gap-1.5">
+                    <ShieldCheck size={14} className="text-[#22B07D]" /> Return & Refund Policy Summary
+                  </label>
+                  <textarea
+                    value={formData.policy.returnRefundPolicy}
+                    onChange={(e) =>
+                      handleNestedChange(
+                        "policy",
+                        "returnRefundPolicy",
+                        e.target.value,
+                      )
+                    }
+                    placeholder="e.g. 30-day hassle-free returns with prepaid shipping label."
+                    rows={2}
+                    maxLength={2000}
+                    className="w-full px-4 py-2 bg-white border-[1.5px] border-[#E0DEF5] rounded-lg text-[13px] focus:border-[#2D2380] outline-none resize-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 5. Connected Custom Text Editor (Long Store Description) */}
+            <div className="bg-white border border-[#E0DEF5] rounded-xl shadow-sm overflow-visible flex flex-col">
+              <div className="bg-[#1A1340] p-3 flex items-center justify-between rounded-t-xl">
+                <div className="flex items-center gap-4 text-white/50">
+                  <Type size={18} />
+                  <span className="text-[12px] font-bold uppercase tracking-widest text-[#F4A836]">
+                    Comprehensive Store Review & Shopping Guide (Long Description)
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <div className="w-3 h-3 rounded-full bg-[#E24B4A]" />
+                  <div className="w-3 h-3 rounded-full bg-[#F4A836]" />
+                  <div className="w-3 h-3 rounded-full bg-[#22B07D]" />
+                </div>
+              </div>
+              <TextEditor
+                value={formData.content.longDescription}
+                onChange={(val) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    content: { ...prev.content, longDescription: val },
+                  }))
+                }
+                maxLength={50000}
+              />
+            </div>
+
+            {/* 6. Company Facts */}
+            <div className="bg-white border border-[#E0DEF5] rounded-xl p-6 shadow-sm space-y-4">
+              <h2 className="text-[16px] font-bold text-[#1A1340] flex items-center gap-2 border-b border-[#E0DEF5] pb-3">
+                <Building size={18} className="text-[#2D2380]" /> Company Facts & E-E-A-T
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-[12px] font-semibold text-[#1A1340] mb-1">
+                    Founded Year
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.facts.foundedYear}
+                    onChange={(e) =>
+                      handleNestedChange(
+                        "facts",
+                        "foundedYear",
+                        e.target.value,
+                      )
+                    }
+                    placeholder="e.g. 1994"
+                    min={1800}
+                    max={new Date().getFullYear()}
+                    className="w-full px-3 py-2 bg-[#F7F6FF] border border-[#E0DEF5] rounded-md text-[13px] outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[12px] font-semibold text-[#1A1340] mb-1">
+                    Headquarters
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.facts.headquarters}
+                    onChange={(e) =>
+                      handleNestedChange(
+                        "facts",
+                        "headquarters",
+                        e.target.value,
+                      )
+                    }
+                    placeholder="e.g. Beaverton, OR"
+                    maxLength={200}
+                    className="w-full px-3 py-2 bg-[#F7F6FF] border border-[#E0DEF5] rounded-md text-[13px] outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[12px] font-semibold text-[#1A1340] mb-1">
+                    Customer Support Info
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.facts.customerSupport}
+                    onChange={(e) =>
+                      handleNestedChange(
+                        "facts",
+                        "customerSupport",
+                        e.target.value,
+                      )
+                    }
+                    placeholder="e.g. 1-800-806-6453 / 24/7 Chat"
+                    maxLength={200}
+                    className="w-full px-3 py-2 bg-[#F7F6FF] border border-[#E0DEF5] rounded-md text-[13px] outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 7. Brand Media Assets */}
+            <div className="bg-white border border-[#E0DEF5] rounded-xl p-6 shadow-sm space-y-4">
+              <h2 className="text-[16px] font-bold text-[#1A1340] flex items-center gap-2 border-b border-[#E0DEF5] pb-3">
+                <ImageIcon size={18} className="text-[#2D2380]" /> Brand Media Assets
+              </h2>
+
+              <MediaAssetField
+                type="logo"
+                label="Square Brand Logo"
+                folder="Products images/stores/logos"
+                withBorder={false}
+              />
+
+              <MediaAssetField
+                type="thumb"
+                label="Store Card Thumbnail Banner"
+                folder="Products images/stores/thumbnails"
+                previewClassName="w-20 h-12 rounded-lg"
+              />
+
+              <MediaAssetField
+                type="og"
+                label="Open Graph Social Share Image"
+                folder="Products images/stores/og"
+                previewClassName="w-24 h-14 rounded-lg"
+              />
+            </div>
+
+            {/* 8. Publishing Settings */}
+            <div className="bg-white border border-[#E0DEF5] rounded-xl p-6 shadow-sm space-y-4">
+              <h2 className="text-[16px] font-bold text-[#1A1340] flex items-center gap-2 border-b border-[#E0DEF5] pb-3 mb-2">
+                <Globe size={18} className="text-[#2D2380]" /> Publishing & Promotion Settings
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Toggle
-                  label="Store Active (Live)"
+                  label="Store Active (Live on Site)"
                   checked={formData.isActive}
                   onChange={(e) =>
                     handleBasicChange({
@@ -1370,7 +1381,7 @@ const NewStoreEditor = () => {
                   activeBg="bg-[#22B07D]"
                 />
                 <Toggle
-                  label="Feature on Homepage"
+                  label="Feature on Homepage & Menus"
                   checked={formData.isFeatured}
                   onChange={(e) =>
                     handleBasicChange({
@@ -1385,108 +1396,32 @@ const NewStoreEditor = () => {
                   colorClass="text-[#F4A836]"
                   activeBg="bg-[#F4A836]"
                 />
-
-                {formData.isFeatured && (
-                  <div className="pt-2 animate-in fade-in slide-in-from-top-2">
-                    <label className="block text-[12px] font-semibold text-[#1A1340] mb-1">
-                      Featured Sort Order (Lower = First)
-                    </label>
-                    <input
-                      type="number"
-                      name="featuredOrder"
-                      value={formData.featuredOrder}
-                      onChange={handleBasicChange}
-                      className="w-full px-3 py-2 bg-white border border-[#E0DEF5] rounded-md text-[13px] outline-none focus:border-[#2D2380]"
-                    />
-                  </div>
-                )}
               </div>
 
-              {/* Brand Assets */}
-              <div className="bg-white border border-[#E0DEF5] rounded-xl p-6 shadow-sm space-y-4">
-                <h2 className="text-[16px] font-bold text-[#1A1340] flex items-center gap-2 border-b border-[#E0DEF5] pb-3">
-                  <ImageIcon size={18} className="text-[#2D2380]" /> Media
-                  Assets
-                </h2>
-
-                <MediaAssetField
-                  type="logo"
-                  label="Square Logo"
-                  folder="Products images/stores/logos"
-                  withBorder={false}
-                />
-
-                <MediaAssetField
-                  type="thumb"
-                  label="Banner Thumbnail"
-                  folder="Products images/stores/thumbnails"
-                  previewClassName="w-20 h-12 rounded-lg"
-                />
-
-                <MediaAssetField
-                  type="og"
-                  label="Open Graph Image"
-                  folder="Products images/stores/og"
-                  previewClassName="w-24 h-14 rounded-lg"
-                />
-              </div>
-
-              {/* Company Facts */}
-              <div className="bg-white border border-[#E0DEF5] rounded-xl p-6 shadow-sm space-y-4">
-                <h2 className="text-[16px] font-bold text-[#1A1340] flex items-center gap-2 border-b border-[#E0DEF5] pb-3">
-                  <Building size={18} className="text-[#2D2380]" /> Company
-                  Facts
-                </h2>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[12px] font-semibold text-[#1A1340] mb-1">
-                      Founded Year
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.facts.foundedYear}
-                      onChange={(e) =>
-                        handleNestedChange(
-                          "facts",
-                          "foundedYear",
-                          e.target.value,
-                        )
-                      }
-                      placeholder="e.g. 1994"
-                      min={1800}
-                      max={new Date().getFullYear()}
-                      className="w-full px-3 py-2 bg-[#F7F6FF] border border-[#E0DEF5] rounded-md text-[13px] outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[12px] font-semibold text-[#1A1340] mb-1">
-                      Headquarters
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.facts.headquarters}
-                      onChange={(e) =>
-                        handleNestedChange(
-                          "facts",
-                          "headquarters",
-                          e.target.value,
-                        )
-                      }
-                      placeholder="Seattle, WA"
-                      maxLength={200}
-                      className="w-full px-3 py-2 bg-[#F7F6FF] border border-[#E0DEF5] rounded-md text-[13px] outline-none"
-                    />
-                  </div>
+              {formData.isFeatured && (
+                <div className="pt-2 animate-in fade-in slide-in-from-top-2 max-w-xs">
+                  <label className="block text-[12px] font-semibold text-[#1A1340] mb-1">
+                    Featured Sort Order (Lower = First)
+                  </label>
+                  <input
+                    type="number"
+                    name="featuredOrder"
+                    value={formData.featuredOrder}
+                    onChange={handleBasicChange}
+                    className="w-full px-3 py-2 bg-white border border-[#E0DEF5] rounded-md text-[13px] outline-none focus:border-[#2D2380]"
+                  />
                 </div>
-              </div>
+              )}
+            </div>
 
-              {/* SEO Block */}
-              <div className="bg-white border border-[#E0DEF5] rounded-xl p-6 shadow-sm space-y-4">
-                <h2 className="text-[16px] font-bold text-[#1A1340] flex items-center gap-2 border-b border-[#E0DEF5] pb-3 mb-2">
-                  <Globe size={18} className="text-[#2D2380]" /> SEO Metadata
-                </h2>
+            {/* 9. SEO Block */}
+            <div className="bg-white border border-[#E0DEF5] rounded-xl p-6 shadow-sm space-y-4">
+              <h2 className="text-[16px] font-bold text-[#1A1340] flex items-center gap-2 border-b border-[#E0DEF5] pb-3 mb-2">
+                <Globe size={18} className="text-[#2D2380]" /> Search Engine Optimization (SEO)
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Toggle
-                  label="Indexable by Google"
+                  label="Allow Search Engine Indexing"
                   checked={formData.seo.indexable}
                   onChange={(e) =>
                     handleNestedChange("seo", "indexable", e.target.checked)
@@ -1496,7 +1431,7 @@ const NewStoreEditor = () => {
                   activeBg="bg-[#22B07D]"
                 />
                 <Toggle
-                  label="NoFollow Outbound Links"
+                  label="NoFollow Outbound Affiliate Links"
                   checked={formData.seo.noFollow}
                   onChange={(e) =>
                     handleNestedChange("seo", "noFollow", e.target.checked)
@@ -1505,7 +1440,9 @@ const NewStoreEditor = () => {
                   colorClass="text-[#E24B4A]"
                   activeBg="bg-[#E24B4A]"
                 />
+              </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[12px] font-bold text-[#1A1340] mb-1">
                     Meta Title
@@ -1516,28 +1453,119 @@ const NewStoreEditor = () => {
                     onChange={(e) =>
                       handleNestedChange("seo", "metaTitle", e.target.value)
                     }
+                    placeholder="Defaults to Store Name + Verified Coupons if empty"
                     maxLength={120}
-                    className="w-full px-3 py-2 bg-[#F7F6FF] border border-[#E0DEF5] rounded-md text-[13px] outline-none"
+                    className="w-full px-3 py-2 bg-white border border-[#E0DEF5] rounded-md text-[13px] outline-none"
                   />
                 </div>
                 <div>
                   <label className="block text-[12px] font-bold text-[#1A1340] mb-1">
-                    Meta Description
+                    Canonical URL
                   </label>
-                  <textarea
-                    value={formData.seo.metaDescription}
+                  <input
+                    type="url"
+                    value={formData.seo.canonicalUrl}
                     onChange={(e) =>
-                      handleNestedChange(
-                        "seo",
-                        "metaDescription",
-                        e.target.value,
-                      )
+                      handleNestedChange("seo", "canonicalUrl", e.target.value)
                     }
-                    maxLength={320}
-                    rows={3}
-                    className="w-full px-3 py-2 bg-[#F7F6FF] border border-[#E0DEF5] rounded-md text-[13px] outline-none resize-none"
+                    placeholder="https://..."
+                    className="w-full px-3 py-2 bg-white border border-[#E0DEF5] rounded-md text-[13px] outline-none"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-[12px] font-bold text-[#1A1340] mb-1">
+                  Meta Description
+                </label>
+                <textarea
+                  value={formData.seo.metaDescription}
+                  onChange={(e) =>
+                    handleNestedChange(
+                      "seo",
+                      "metaDescription",
+                      e.target.value,
+                    )
+                  }
+                  placeholder="Compelling SERP description with active discount figures..."
+                  maxLength={320}
+                  rows={3}
+                  className="w-full px-3 py-2 bg-white border border-[#E0DEF5] rounded-md text-[13px] outline-none resize-none"
+                />
+              </div>
+            </div>
+
+            {/* 10. Structured FAQs Builder */}
+            <div className="bg-white border border-[#E0DEF5] rounded-xl p-6 shadow-sm space-y-4">
+              <div className="flex items-center justify-between mb-2 border-b border-[#E0DEF5] pb-4">
+                <div className="flex items-center gap-2">
+                  <MessageCircleQuestion
+                    size={18}
+                    className="text-[#2D2380]"
+                  />
+                  <div>
+                    <h2 className="text-[16px] font-bold text-[#1A1340]">
+                      Structured Store FAQs (Schema.org JSON-LD)
+                    </h2>
+                    <p className="text-[12px] text-[#7775A0]">
+                      Q&amp;A accordion displayed on the store page and injected into Google rich snippets.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={addFaq}
+                  disabled={formData.faqs.length >= 20}
+                  className="flex items-center gap-1.5 text-[#2D2380] font-bold text-[13px] hover:text-[#FF6B35] disabled:opacity-50 transition-colors"
+                >
+                  <Plus size={16} /> Add FAQ ({formData.faqs.length}/20)
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {formData.faqs.length === 0 ? (
+                  <p className="text-center py-6 text-[#7775A0] text-[13px] italic border-2 border-dashed border-[#F7F6FF] rounded-lg">
+                    No FAQs added. Add questions (e.g. &quot;How do I use a promo code?&quot;) for rich snippet rankings.
+                  </p>
+                ) : (
+                  formData.faqs.map((faq, idx) => (
+                    <div
+                      key={idx}
+                      className="p-4 bg-[#F7F6FF] border border-[#E0DEF5] rounded-xl relative group"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => removeFaq(idx)}
+                        className="absolute top-4 right-4 text-[#7775A0] hover:text-[#E24B4A] transition-all"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                      <div className="space-y-3 pr-8">
+                        <input
+                          type="text"
+                          placeholder="Question (e.g. Does Nike offer free shipping?)..."
+                          value={faq.question}
+                          onChange={(e) =>
+                            updateFaq(idx, "question", e.target.value)
+                          }
+                          maxLength={200}
+                          required
+                          className="w-full px-3 py-2 bg-white border border-[#E0DEF5] rounded-md text-[14px] font-bold text-[#1A1340] focus:border-[#2D2380] outline-none"
+                        />
+                        <textarea
+                          placeholder="Detailed answer..."
+                          value={faq.answer}
+                          onChange={(e) =>
+                            updateFaq(idx, "answer", e.target.value)
+                          }
+                          maxLength={1200}
+                          required
+                          className="w-full px-3 py-2 bg-white border border-[#E0DEF5] rounded-md text-[13px] text-[#7775A0] focus:border-[#2D2380] outline-none resize-y min-h-[60px]"
+                        />
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -1562,8 +1590,7 @@ const NewStoreEditor = () => {
             {/* Field: URL vs Tracking Link */}
             <div className="space-y-1 md:col-span-2 bg-[rgba(244,168,54,0.1)] border border-[rgba(244,168,54,0.3)] p-4 rounded-lg">
               <h3 className="text-[#F4A836] font-bold text-[14px] flex items-center gap-2">
-                <LinkIcon size={16} /> Official URL vs. Affiliate Tracking Link
-                (CRITICAL)
+                <LinkIcon size={16} /> Official URL vs. Affiliate Tracking Link (CRITICAL)
               </h3>
               <p className="text-[13px] text-[#E0DEF5] leading-relaxed mt-2">
                 <span className="font-semibold text-white">
@@ -1577,7 +1604,7 @@ const NewStoreEditor = () => {
                   Master Tracking Link:
                 </span>{" "}
                 This is your actual affiliate link provided by the network
-                (e.g., Awin, CJ). If you leave this blank, the system will fall
+                (e.g., Awin, CJ, Impact). If you leave this blank, the system will fall
                 back to individual coupon tracking links. If filled, ensure you
                 include the dynamic sub-ID placeholder (e.g.,{" "}
                 <code>?clickref={"{subId}"}</code>).
@@ -1593,8 +1620,7 @@ const NewStoreEditor = () => {
                 <span className="font-semibold text-white">How it works:</span>{" "}
                 If a store is selected as &quot;United States (US)&quot;, it
                 will only appear to users browsing from the US or viewing the US
-                region of DealVerse. Select &quot;Global&quot; if the store
-                ships internationally (like Amazon).
+                region. Select &quot;Global&quot; if the store ships internationally.
               </p>
             </div>
 
@@ -1620,9 +1646,8 @@ const NewStoreEditor = () => {
               <p className="text-[13px] text-[#E0DEF5] leading-relaxed">
                 <span className="font-semibold text-white">Rule of thumb:</span>{" "}
                 A store must have one Primary Category (e.g., Fashion). However,
-                if it&apos;s a department store, you can tag up to 10 secondary
-                categories so it appears in multiple navigation filters (e.g.,
-                Home, Tech, Beauty).
+                if it&apos;s a multi-department store, you can tag up to 10 secondary
+                categories so it appears across multiple category filters.
               </p>
             </div>
 
@@ -1633,10 +1658,9 @@ const NewStoreEditor = () => {
               </h3>
               <p className="text-[13px] text-[#E0DEF5] leading-relaxed">
                 <span className="font-semibold text-white">When to check:</span>{" "}
-                Turn this on (Red) if you do not want to pass SEO link juice to
-                the merchant. For major affiliate sites, it is generally
-                recommended to keep this ON to comply with Google&apos;s
-                sponsored link guidelines.
+                Turn this on if you do not want to pass SEO link juice to
+                the merchant. For major affiliate sites, keeping this ON complies
+                with Google&apos;s sponsored link guidelines.
               </p>
             </div>
           </div>
