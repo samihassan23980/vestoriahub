@@ -1,17 +1,15 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
-import { connectDB } from "@/app/lib/mongodb"; // Aapka updated DB connection file
+import { connectDB } from "@/app/lib/mongodb";
 import User from "@/app/models/user";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-fallback-super-secret-key";
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 30 * 60 * 1000; // 30 mins
 
 export async function POST(req) {
   try {
-    const body = await req.json();
-    const { email, password } = body;
+    await connectDB();
+    const { email, password } = await req.json();
 
-    // 1. Input Validation
     if (!email || !password) {
       return NextResponse.json(
         { error: "Email and password are required." },
@@ -19,56 +17,51 @@ export async function POST(req) {
       );
     }
 
-    // 2. Database Connection
-    await connectDB();
+    const cleanEmail = email.toLowerCase().trim();
 
-    // 3. Find User (Explicitly selecting password as per schema design)
-    const user = await User.findOne({
-      email: email.toLowerCase().trim(),
-    }).select("+password");
+    // Password explicitly fetch karein
+    const user = await User.findOne({ email: cleanEmail }).select("+password");
 
     if (!user) {
-      // Generic error message prevents email enumeration attacks
       return NextResponse.json(
         { error: "Invalid email or password." },
         { status: 401 },
       );
     }
 
-    // 4. Check Account Status (Disabled)
+    // 1. Check Account Status
     if (user.status === "disabled") {
       return NextResponse.json(
-        { error: "Your account has been disabled by the administrator." },
+        { error: "Your account has been deactivated. Please contact support." },
         { status: 403 },
       );
     }
 
-    // 5. Check Email Verification
-    if (!user.emailVerified) {
-      return NextResponse.json(
-        { error: "Please verify your email address before logging in." },
-        { status: 403 },
+    // 2. Check Lockout
+    if (user.lockoutUntil && new Date(user.lockoutUntil) > new Date()) {
+      const remainingMins = Math.ceil(
+        (new Date(user.lockoutUntil) - new Date()) / (60 * 1000),
       );
-    }
-
-    // 6. Check Brute-Force Lockout
-    if (user.isLockedOut()) {
-      const lockMinutes = Math.ceil((user.lockoutUntil - new Date()) / 60000);
       return NextResponse.json(
         {
-          error: `Account locked due to too many failed attempts. Try again in ${lockMinutes} minutes.`,
+          error: `Account is temporarily locked due to multiple failed attempts. Try again in ${remainingMins} minute(s).`,
         },
-        { status: 423 }, // 423 Locked
+        { status: 423 },
       );
     }
 
-    // 7. Verify Password
-    const isMatch = await user.comparePassword(password);
+    // 3. Plain-text Password Check
+    const isMatch = password === user.password;
 
     if (!isMatch) {
-      // Record failed attempt and save (handles automatic lockout internally)
-      await user.recordFailedLogin();
-      await user.save();
+      const newAttempts = (user.loginAttempts || 0) + 1;
+      const updatePayload = { loginAttempts: newAttempts };
+
+      if (newAttempts >= MAX_LOGIN_ATTEMPTS) {
+        updatePayload.lockoutUntil = new Date(Date.now() + LOCKOUT_DURATION_MS);
+      }
+
+      await User.findByIdAndUpdate(user._id, updatePayload);
 
       return NextResponse.json(
         { error: "Invalid email or password." },
@@ -76,50 +69,52 @@ export async function POST(req) {
       );
     }
 
-    // 8. Success: Reset failed attempts & update lastLoginAt
-    user.recordSuccessfulLogin();
-    await user.save();
-
-    // 9. Generate JWT
-    const token = jwt.sign(
-      {
-        userId: user._id,
-        role: user.role,
-        email: user.email,
-        canAccessAdmin: user.access.canAccessAdmin,
+    // 4. Successful Login - Direct atomic update (Validation bypass karta hai)
+    await User.findByIdAndUpdate(user._id, {
+      $set: {
+        loginAttempts: 0,
+        lockoutUntil: null,
+        lastLoginAt: new Date(),
       },
-      JWT_SECRET,
-      { expiresIn: "7d" }, // Token expires in 7 days
-    );
-
-    // 10. Set HTTP-Only Cookie via Next.js cookies() API
-    cookies().set({
-      name: "token",
-      value: token,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // HTTPS only in production
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
-      path: "/",
     });
 
-    // Remove password from the response payload
-    const userObj = user.toObject();
-    delete userObj.password;
-    delete userObj.emailVerifyToken;
-    delete userObj.resetPasswordToken;
+    // 5. Build Response and set Cookies
+    const userResponse = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    };
 
-    return NextResponse.json(
-      {
-        message: "Login successful",
-        user: userObj,
-      },
-      { status: 200 },
-    );
+    const res = NextResponse.json({
+      success: true,
+      message: "Authenticated successfully.",
+      user: userResponse,
+    });
+
+    const sessionToken = Buffer.from(
+      `${user._id}:${user.email}:${Date.now()}`,
+    ).toString("base64");
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 12, // 12 hours
+      path: "/",
+    };
+
+    res.cookies.set("admin_token", sessionToken, cookieOptions);
+    res.cookies.set("user_role", user.role, {
+      ...cookieOptions,
+      httpOnly: false,
+    });
+
+    return res;
   } catch (error) {
-    console.error("Login API Error:", error);
+    console.error("POST /api/auth/login Error:", error);
     return NextResponse.json(
-      { error: "An internal server error occurred during login." },
+      { error: error.message || "An unexpected error occurred during login." },
       { status: 500 },
     );
   }

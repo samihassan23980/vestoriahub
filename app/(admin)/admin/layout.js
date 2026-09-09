@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Swal from "sweetalert2";
-import "./admin-theme.css";
 import {
   LayoutDashboard,
   Menu,
@@ -14,7 +13,6 @@ import {
   LogOut,
   BarChart2,
   Tag,
-  ShoppingBag,
   Store,
   Layers,
   FileText,
@@ -27,21 +25,258 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+// ─── ROLES ──────────────────────────────────────────────────────────────────
+const ROLES = {
+  ADMIN: "admin",
+  MANAGER: "manager",
+  SEO_MANAGER: "seo_manager",
+  CONTENT_MANAGER: "content_manager",
+  BLOG_EDITOR: "blog_editor",
+  STORE_EDITOR: "store_editor",
+  AFFILIATE_EDITOR: "affiliate_editor",
+};
+
+export const ROLE_LABELS = {
+  [ROLES.ADMIN]: "Admin",
+  [ROLES.MANAGER]: "Manager",
+  [ROLES.SEO_MANAGER]: "SEO Manager",
+  [ROLES.CONTENT_MANAGER]: "Content Manager",
+  [ROLES.BLOG_EDITOR]: "Blog Editor",
+  [ROLES.STORE_EDITOR]: "Store Editor",
+  [ROLES.AFFILIATE_EDITOR]: "Affiliate Editor",
+};
+
+const ADMIN_MANAGER = [ROLES.ADMIN, ROLES.MANAGER];
+const ADMIN_ONLY = [ROLES.ADMIN];
+
+// ─── NAV CONFIG ─────────────────────────────────────────────────────────────
+const navGroups = [
+  {
+    title: "Overview",
+    items: [
+      { name: "Dashboard", href: "/admin", icon: LayoutDashboard, roles: Object.values(ROLES) },
+      {
+        name: "Analytics & Reports",
+        href: "/admin/analytics",
+        icon: BarChart2,
+        roles: ADMIN_MANAGER,
+      },
+    ],
+  },
+  {
+    title: "Content Management",
+    items: [
+      {
+        name: "Blog Editor",
+        href: "/admin/blogs",
+        icon: FileText,
+        roles: [...ADMIN_MANAGER, ROLES.SEO_MANAGER, ROLES.CONTENT_MANAGER, ROLES.BLOG_EDITOR],
+      },
+      {
+        name: "Brands & Stores",
+        href: "/admin/stores",
+        icon: Store,
+        roles: [...ADMIN_MANAGER, ROLES.SEO_MANAGER, ROLES.CONTENT_MANAGER, ROLES.STORE_EDITOR],
+      },
+      {
+        name: "Affiliate Products",
+        href: "/admin/affiliate-products",
+        icon: Network,
+        roles: [
+          ...ADMIN_MANAGER,
+          ROLES.SEO_MANAGER,
+          ROLES.CONTENT_MANAGER,
+          ROLES.AFFILIATE_EDITOR,
+        ],
+      },
+      {
+        name: "Coupons & Offers",
+        href: "/admin/coupons",
+        icon: Tag,
+        roles: [...ADMIN_MANAGER, ROLES.CONTENT_MANAGER, ROLES.STORE_EDITOR],
+      },
+      {
+        name: "Categories",
+        href: "/admin/categories",
+        icon: Layers,
+        roles: [
+          ...ADMIN_MANAGER,
+          ROLES.SEO_MANAGER,
+          ROLES.CONTENT_MANAGER,
+          ROLES.BLOG_EDITOR,
+          ROLES.STORE_EDITOR,
+          ROLES.AFFILIATE_EDITOR,
+        ],
+      },
+      {
+        name: "Media Library",
+        href: "/admin/media",
+        icon: ImageIcon,
+        roles: [
+          ...ADMIN_MANAGER,
+          ROLES.CONTENT_MANAGER,
+          ROLES.BLOG_EDITOR,
+          ROLES.STORE_EDITOR,
+          ROLES.AFFILIATE_EDITOR,
+        ],
+      },
+      {
+        name: "Slider",
+        href: "/admin/slider",
+        icon: Store,
+        roles: [...ADMIN_MANAGER, ROLES.CONTENT_MANAGER],
+      },
+      {
+        name: "Affiliate Networks",
+        href: "/admin/networks",
+        icon: Network,
+        roles: [...ADMIN_MANAGER, ROLES.CONTENT_MANAGER],
+      },
+      {
+        name: "Countries & Geo",
+        href: "/admin/countries",
+        icon: Globe,
+        roles: [...ADMIN_MANAGER, ROLES.CONTENT_MANAGER],
+      },
+    ],
+  },
+  {
+    title: "SEO Management",
+    items: [
+      {
+        name: "Internal Linking Hub",
+        href: "/admin/internal-links",
+        icon: FileText,
+        roles: [...ADMIN_MANAGER, ROLES.SEO_MANAGER],
+      },
+      {
+        name: "SEO Link Health & Clusters",
+        href: "/admin/seo-audit",
+        icon: FileText,
+        roles: [...ADMIN_MANAGER, ROLES.SEO_MANAGER],
+      },
+      {
+        name: "Meta Data Fixes",
+        href: "/admin/seo-metadata",
+        icon: FileText,
+        roles: [...ADMIN_MANAGER, ROLES.SEO_MANAGER],
+      },
+      {
+        name: "Empty Store Fixes",
+        href: "/admin/empty-stores",
+        icon: FileText,
+        roles: [...ADMIN_MANAGER, ROLES.SEO_MANAGER],
+      },
+      {
+        name: "Broken Links Checker",
+        href: "/admin/affiliate-links",
+        icon: FileText,
+        roles: [...ADMIN_MANAGER, ROLES.SEO_MANAGER],
+      },
+      {
+        name: "Keyword Optimization",
+        href: "/admin/keyword-optimizer",
+        icon: FileText,
+        roles: [...ADMIN_MANAGER, ROLES.SEO_MANAGER],
+      },
+      {
+        name: "CTR Booster",
+        href: "/admin/ctr-booster",
+        icon: FileText,
+        roles: [...ADMIN_MANAGER, ROLES.SEO_MANAGER],
+      },
+      {
+        name: "AI CTR Booster",
+        href: "/admin/ai-ctr-booster",
+        icon: FileText,
+        roles: [...ADMIN_MANAGER, ROLES.SEO_MANAGER],
+      },
+      {
+        name: "Topical Authority & Cluster Mesh Architect",
+        href: "/admin/ai-topic-mesh",
+        icon: FileText,
+        roles: [...ADMIN_MANAGER, ROLES.SEO_MANAGER],
+      },
+      {
+        name: "Keyword-Intelligence Cluster Matrix",
+        href: "/admin/keyword-cluster-matrix",
+        icon: FileText,
+        roles: [...ADMIN_MANAGER, ROLES.SEO_MANAGER],
+      },
+      {
+        name: "Specific Blog Authority Matrix",
+        href: "/admin/single-blog-matrix",
+        icon: FileText,
+        roles: [...ADMIN_MANAGER, ROLES.SEO_MANAGER],
+      },
+      {
+        name: "Year Checker",
+        href: "/admin/stale-content",
+        icon: FileText,
+        roles: [...ADMIN_MANAGER, ROLES.SEO_MANAGER],
+      },
+    ],
+  },
+  {
+    title: "Platform & Settings",
+    items: [
+      { name: "Users & Roles", href: "/admin/users", icon: Users, roles: ADMIN_ONLY },
+      { name: "Firewall", href: "/admin/firewall", icon: ShieldCheck, roles: ADMIN_ONLY },
+      { name: "Legal Pages", href: "/admin/legal", icon: FileText, roles: ADMIN_MANAGER },
+      { name: "Global Settings", href: "/admin/settings", icon: Settings, roles: ADMIN_MANAGER },
+    ],
+  },
+];
+
+function getNavForRole(role) {
+  return navGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => item.roles.includes(role)),
+    }))
+    .filter((group) => group.items.length > 0);
+}
+
+function getInitials(name) {
+  if (!name) return "AD";
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 const AdminLayout = ({ children }) => {
   const pathname = usePathname();
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
 
   // ─── AUTHENTICATION GUARD ────────────────────────────────────────────────
   useEffect(() => {
     const verifyAccess = () => {
-      const adminUser = localStorage.getItem("adminuser");
-      if (!adminUser) {
+      const raw = localStorage.getItem("adminuser");
+      if (!raw) {
         router.push("/signin");
-      } else {
-        setIsAuthChecking(false);
+        return;
       }
+
+      let user = { name: "Administrator", role: ROLES.ADMIN };
+      try {
+        const parsed = JSON.parse(raw);
+        user = {
+          name: parsed.name || "Administrator",
+          role: parsed.role || ROLES.ADMIN,
+        };
+      } catch {
+        // Fallback for legacy format
+      }
+
+      setCurrentUser(user);
+      setIsAuthChecking(false);
     };
     verifyAccess();
   }, [router]);
@@ -50,29 +285,35 @@ const AdminLayout = ({ children }) => {
     setIsSidebarOpen(false);
   }, [pathname]);
 
-  // ─── LOGOUT FUNCTIONALITY ─────────────────────────────────────────────────
+  // ─── LOGOUT (CALLS API TO PURGE COOKIES + CLEARS LOCALSTORAGE) ───────────
   const handleLogout = () => {
     Swal.fire({
       title: "Sign Out",
       text: "Are you sure you want to log out of the admin panel?",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#1C352D",
-      cancelButtonColor: "#E2D9CC",
+      confirmButtonColor: "#8467D7",
+      cancelButtonColor: "#33383e",
       confirmButtonText: "Yes, sign out",
       cancelButtonText: "Cancel",
-      background: "#FFFFFF",
-      color: "#16241F",
-      iconColor: "#D9A441",
+      background: "#0f1722",
+      color: "#f9fafb",
       customClass: {
-        popup: "rounded-2xl border border-[#E2D9CC] shadow-xl",
-        confirmButton: "rounded-lg font-bold px-6 py-2.5 !text-[#FDFBF7]",
-        cancelButton: "rounded-lg font-bold px-6 py-2.5 !text-[#16241F]",
+        popup: "rounded-[16px] border border-[#33383e]",
+        confirmButton: "rounded-[8px] font-bold px-5 py-2 text-white",
+        cancelButton: "rounded-[8px] font-bold px-5 py-2 text-white",
       },
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.isConfirmed) {
+        try {
+          // Server cookies flush karein
+          await fetch("/api/auth/logout", { method: "POST" });
+        } catch (e) {
+          console.error("Logout API call failed:", e);
+        }
+
+        // Local storage clear karein
         localStorage.removeItem("adminuser");
-        router.push("/signin");
 
         Swal.fire({
           toast: true,
@@ -80,152 +321,114 @@ const AdminLayout = ({ children }) => {
           icon: "success",
           title: "Signed out successfully",
           showConfirmButton: false,
-          timer: 1500,
-          background: "#FFFFFF",
-          color: "#16241F",
-          iconColor: "#D9A441",
-          customClass: {
-            popup: "rounded-xl border border-[#E2D9CC]",
-          },
+          timer: 1200,
+          background: "#0f1722",
+          color: "#f9fafb",
+          iconColor: "#8467D7",
+        }).then(() => {
+          router.push("/signin");
+          router.refresh();
         });
       }
     });
   };
 
-  const navGroups = [
-    {
-      title: "Overview",
-      items: [
-        { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-        { name: "Analytics & Reports", href: "/admin/analytics", icon: BarChart2 },
-      ],
-    },
-    {
-      title: "Offers & Deals",
-      items: [
-        { name: "Coupons & Offers", href: "/admin/coupons", icon: Tag },
-        { name: "Amazon Deals", href: "/admin/amazon-deals", icon: ShoppingBag },
-      ],
-    },
-    {
-      title: "Content Management",
-      items: [
-        { name: "Brands & Stores", href: "/admin/stores", icon: Store },
-        { name: "Categories", href: "/admin/categories", icon: Layers },
-        { name: "Blog Editor", href: "/admin/blogs", icon: FileText },
-        { name: "Slider", href: "/admin/slider", icon: Store },
-      ],
-    },
-    {
-      title: "Platform & Settings",
-      items: [
-        { name: "Media Library", href: "/admin/media", icon: ImageIcon },
-        { name: "Affiliate Networks", href: "/admin/networks", icon: Network },
-        { name: "Firewall", href: "/admin/firewall", icon: ShieldCheck },
-        { name: "Affiliate Products", href: "/admin/affiliate-products", icon: Network },
-        { name: "Countries & Geo", href: "/admin/countries", icon: Globe },
-        { name: "Users & Roles", href: "/admin/users", icon: Users },
-        { name: "Legal Pages", href: "/admin/legal", icon: FileText },
-        { name: "Global Settings", href: "/admin/settings", icon: Settings },
-      ],
-    },
-  ];
-
   if (isAuthChecking) {
     return (
-      <div className="h-screen w-screen flex flex-col items-center justify-center bg-[#F8F0E5] font-sans">
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-[#080d14] font-sans">
         <div className="relative flex items-center justify-center mb-6">
-          <div className="absolute w-20 h-20 border-4 border-[#D9A441] rounded-full animate-ping opacity-25" />
-          <div className="w-16 h-16 bg-[#FFFFFF] border border-[#E2D9CC] rounded-full flex items-center justify-center shadow-lg">
-            <ShieldCheck size={32} className="text-[#D9A441]" />
+          <div className="absolute w-[80px] h-[80px] border-[3px] border-[#8467D7] rounded-full animate-ping opacity-20" />
+          <div className="w-[64px] h-[64px] bg-[#0f1722] border border-[#33383e] rounded-full flex items-center justify-center shadow-xl z-10">
+            <ShieldCheck size={32} className="text-[#8467D7]" />
           </div>
         </div>
-        <h2 className="!text-[#10201B] text-[24px] font-heading font-extrabold tracking-tight mb-2">
+        <h2 className="text-[#f9fafb] text-[24px] font-bold tracking-tight mb-2">
           Verifying Access
         </h2>
-        <p className="!text-[#6B7280] text-[14px] flex items-center gap-2 font-medium">
-          <Loader2 size={16} className="animate-spin text-[#D9A441]" />
-          Securing session connection...
+        <p className="text-[#9fadbb] text-[14px] flex items-center gap-2 font-medium">
+          <Loader2 size={16} className="animate-spin text-[#8467D7]" />
+          Securing connection...
         </p>
       </div>
     );
   }
 
+  const visibleNavGroups = getNavForRole(currentUser?.role || ROLES.ADMIN);
+  const displayName = currentUser?.name || "Administrator";
+  const displayRole = ROLE_LABELS[currentUser?.role] || "Admin";
+  const initials = getInitials(displayName);
+
   return (
-    <div className="admin-isolated-theme flex h-screen bg-[#F8F0E5] font-sans overflow-hidden !text-[#16241F] w-full">
-      
+    <div className="admin-isolated-theme flex h-screen bg-[#080d14] font-sans overflow-hidden text-white w-full">
       {/* ─── MOBILE SIDEBAR OVERLAY ─── */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-[#10201B]/40 backdrop-blur-sm lg:hidden transition-opacity duration-300"
+          className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm lg:hidden transition-opacity duration-300"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
       {/* ─── SIDEBAR ─── */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-[265px] transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 shrink-0 border-r border-[#E2D9CC] bg-[#FFFFFF] ${
-          isSidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
+        className={`fixed inset-y-0 left-0 z-50 w-[260px] transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 shrink-0 border-r border-[#33383e] bg-[#0f1722] ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex flex-col h-full justify-between">
-          
-          {/* Top Brand Logo Section */}
-          <div className="h-[74px] flex items-center justify-between px-6 border-b border-[#E2D9CC] shrink-0 bg-[#FFFFFF]">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-[#D9A441] text-[#16241F] flex items-center justify-center font-extrabold shadow-xs">
-                <Tag size={16} />
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-heading font-extrabold text-[18px] tracking-tight !text-[#10201B]">
-                  Vestoria<span className="text-[#D9A441]">Hub</span>
-                </span>
-                <span className="px-2 py-0.5 rounded-full bg-[#EBF3EE] border border-[#BDD6C4] text-[9.5px] font-heading font-extrabold uppercase tracking-wider text-[#1C352D]">
-                  Admin
-                </span>
-              </div>
-            </div>
-
+        <div className="flex flex-col h-full">
+          {/* Logo Section */}
+          <div className="h-[72px] flex items-center justify-between px-6 border-b border-[#33383e] shrink-0">
+            <Link
+              href="/admin"
+              className="flex items-center gap-1.5 focus:outline-none"
+            >
+         
+              <span className="font-heading font-black text-lg tracking-tight text-white">
+                Pie<span className="text-[#8467D7]">Solution</span>
+              </span>
+            
+            </Link>
             <button
               onClick={() => setIsSidebarOpen(false)}
-              className="lg:hidden p-2 rounded-lg hover:bg-[#F8F0E5] text-[#6B7280] hover:text-[#10201B] transition-colors"
-              aria-label="Close sidebar"
+              className="lg:hidden p-2 rounded-lg hover:bg-[#16202f] text-[#9fadbb] hover:text-white transition-colors"
             >
-              <X size={19} />
+              <X size={20} />
             </button>
           </div>
 
           {/* Navigation Items */}
-          <div className="flex-1 overflow-y-auto py-6 px-4 space-y-7 custom-scrollbar">
-            {navGroups.map((group, idx) => (
+          <div className="flex-1 overflow-y-auto py-6 px-4 space-y-8 custom-scrollbar">
+            {visibleNavGroups.map((group, idx) => (
               <div key={idx}>
-                <h3 className="px-3 text-[10.5px] font-heading font-extrabold uppercase tracking-widest !text-[#8A8F8C] mb-2.5">
+                <h3 className="px-3 text-[11px] font-bold uppercase tracking-wider text-[#9fadbb] opacity-70 mb-3">
                   {group.title}
                 </h3>
                 <ul className="space-y-1">
                   {group.items.map((item) => {
                     const isActive =
                       pathname === item.href ||
-                      (item.href !== "/admin" && pathname.startsWith(`${item.href}/`));
-
+                      pathname.startsWith(`${item.href}/`);
                     return (
                       <li key={item.name}>
                         <Link
                           href={item.href}
-                          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-semibold transition-all duration-200 group ${
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all duration-200 group ${
                             isActive
-                              ? "bg-[#1C352D] !text-[#FDFBF7] shadow-sm"
-                              : "!text-[#16241F] hover:bg-[#F8F0E5] hover:!text-[#10201B]"
+                              ? "bg-[#8467D7] text-white shadow-md shadow-[#8467D7]/20"
+                              : "text-[#9fadbb] hover:bg-[#16202f] hover:text-white"
                           }`}
                         >
                           <item.icon
-                            size={17}
+                            size={18}
                             strokeWidth={isActive ? 2.5 : 2}
-                            className={isActive ? "text-[#D9A441]" : "text-[#8A8F8C] group-hover:text-[#1C352D]"}
+                            className={
+                              isActive
+                                ? "text-white"
+                                : "text-[#9fadbb] group-hover:text-white transition-colors"
+                            }
                           />
                           <span className="flex-1 truncate">{item.name}</span>
                           {isActive && (
-                            <div className="w-1.5 h-1.5 rounded-full bg-[#D9A441]" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px_#fff]" />
                           )}
                         </Link>
                       </li>
@@ -237,91 +440,90 @@ const AdminLayout = ({ children }) => {
           </div>
 
           {/* User Profile Footer */}
-          <div className="p-3.5 border-t border-[#E2D9CC] shrink-0 bg-[#FDFBF7]">
+          <div className="p-4 border-t border-[#33383e] shrink-0 bg-[#080d14]/40">
             <div
               onClick={handleLogout}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[#EBF3EE] border border-transparent hover:border-[#BDD6C4] transition-all cursor-pointer group"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#16202f] transition-colors cursor-pointer group"
             >
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#D9A441] to-[#BE8E34] text-[#16241F] flex items-center justify-center font-heading font-extrabold text-[12px] shrink-0 shadow-xs">
-                SU
+              <div className="w-9 h-9 rounded-full bg-[#8467D7] flex items-center justify-center font-bold text-white shrink-0 shadow-sm">
+                {initials}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-heading font-bold !text-[#10201B] truncate">Super Admin</p>
-                <p className="text-[11px] !text-[#6B7280] truncate">Control Suite</p>
+                <p className="text-[13px] font-bold text-white truncate leading-tight">
+                  {displayName}
+                </p>
+                <p className="text-[11px] text-[#9fadbb] font-medium truncate mt-0.5">
+                  {displayRole}
+                </p>
               </div>
               <LogOut
                 size={16}
-                className="text-[#8A8F8C] group-hover:text-[#C1432F] transition-colors shrink-0"
+                className="text-[#9fadbb] group-hover:text-red-400 transition-colors shrink-0"
               />
             </div>
           </div>
-
         </div>
       </aside>
 
       {/* ─── MAIN CONTENT AREA ─── */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-        
         {/* Top Navbar Header */}
-        <header className="h-[74px] bg-[#FFFFFF] border-b border-[#E2D9CC] flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0 z-30">
+        <header className="h-[72px] bg-[#0f1722] border-b border-[#33383e] flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0 z-30">
           <div className="flex items-center gap-4 flex-1">
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="lg:hidden p-2 text-[#6B7280] hover:text-[#10201B] hover:bg-[#F8F0E5] rounded-xl transition-all"
-              aria-label="Open navigation menu"
+              className="lg:hidden p-2 -ml-2 text-[#9fadbb] hover:text-white hover:bg-[#16202f] rounded-lg transition-all"
             >
               <Menu size={22} />
             </button>
 
-            {/* Global Admin Search Bar */}
+            {/* Search Bar */}
             <div className="hidden sm:flex items-center relative w-full max-w-md group">
               <Search
-                size={16}
-                className="absolute left-4 text-[#8A8F8C] group-focus-within:text-[#1C352D] transition-colors"
+                size={18}
+                className="absolute left-4 text-[#9fadbb] opacity-60 group-focus-within:text-[#8467D7] group-focus-within:opacity-100 transition-colors"
               />
               <input
                 type="text"
-                placeholder="Search coupons, stores, blogs, or analytics..."
-                className="w-full pl-11 pr-14 py-2 bg-[#FDFBF7] border border-[#E2D9CC] rounded-full text-[13px] !text-[#16241F] placeholder-[#8A8F8C] focus:outline-none focus:border-[#1C352D] focus:ring-2 focus:ring-[#1C352D]/10 transition-all shadow-xs"
+                placeholder="Search coupons, stores, or blogs..."
+                className="w-full pl-11 pr-12 py-2.5 bg-[#080d14] border border-[#33383e] rounded-full text-[13px] text-white placeholder:text-[#9fadbb]/60 focus:outline-none focus:border-[#8467D7] transition-all font-medium"
               />
-              <div className="absolute right-3 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold text-[#6B7280] bg-[#FFFFFF] border border-[#E2D9CC]">
+              <div className="absolute right-3 px-2 py-0.5 rounded text-[10px] font-bold text-[#9fadbb] bg-[#0f1722] border border-[#33383e]">
                 ⌘K
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-4 ml-4">
-            {/* Notification Badge */}
-            <button 
-              className="relative p-2.5 text-[#6B7280] hover:text-[#10201B] hover:bg-[#F8F0E5] rounded-xl border border-transparent hover:border-[#E2D9CC] transition-all"
-              aria-label="Notifications"
-            >
-              <Bell size={18} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-[#C1432F] rounded-full ring-2 ring-[#FFFFFF]" />
+          <div className="flex items-center gap-3 sm:gap-5 ml-4">
+            <button className="relative p-2 text-[#9fadbb] hover:text-white hover:bg-[#16202f] rounded-lg transition-all">
+              <Bell size={20} />
+              <span className="absolute top-2 right-2 w-2 h-2 bg-[#FF6F61] rounded-full border-2 border-[#0f1722]" />
             </button>
 
-            <div className="h-7 w-[1px] bg-[#E2D9CC] hidden sm:block" />
+            <div className="h-6 w-[1px] bg-[#33383e] hidden sm:block" />
 
-            {/* Profile Frame */}
-            <div className="flex items-center gap-2.5 pl-1">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#D9A441] to-[#BE8E34] text-[#16241F] flex items-center justify-center shrink-0 shadow-xs font-heading font-extrabold text-[12.5px]">
-                SU
+            <div className="flex items-center gap-2.5 p-1 pr-3 rounded-full border border-transparent">
+              <div className="w-8 h-8 rounded-full bg-[#8467D7] flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                <span className="text-white font-bold text-[12px]">{initials}</span>
               </div>
               <div className="text-left hidden md:block">
-                <p className="text-[13px] font-heading font-bold !text-[#10201B] leading-tight">Super Admin</p>
-                <p className="text-[11px] !text-[#6B7280] leading-tight mt-0.5">Active Session</p>
+                <p className="text-[12px] font-bold text-white leading-none">
+                  {displayName}
+                </p>
+                <p className="text-[10px] font-medium text-[#9fadbb] leading-none mt-1">
+                  {displayRole}
+                </p>
               </div>
             </div>
           </div>
         </header>
 
-        {/* ─── DYNAMIC CHILDREN CANVAS ─── */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-[#F8F0E5] custom-scrollbar">
-          <div className="min-h-full p-4 sm:p-6 lg:p-8 !text-[#16241F]">
+        {/* Dynamic Children Canvas */}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-[#080d14] custom-scrollbar">
+          <div className="min-h-full p-4 sm:p-6 lg:p-8 text-white">
             {children}
           </div>
         </main>
-
       </div>
     </div>
   );

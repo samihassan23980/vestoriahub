@@ -102,12 +102,20 @@ const UserSchema = new mongoose.Schema(
      * "admin"       — manages all content and stores; cannot manage users
      * "editor"      — creates/edits blogs and coupons; no admin settings
      */
-    role: {
-      type: String,
-      enum: ["super_admin", "admin", "editor"],
-      default: "editor",
-      index: true,
-    },
+  role: {
+  type: String,
+  enum: [
+    "admin",
+    "manager",
+    "seo_manager",
+    "content_manager",
+    "blog_editor",
+    "store_editor",
+    "affiliate_editor",
+  ],
+  default: "blog_editor",
+  index: true,
+},
 
     /**
      * Granular feature access flags.

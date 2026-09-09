@@ -4,159 +4,177 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Lock,
-  User,
+  Mail,
   Eye,
   EyeOff,
   Sparkles,
   ShieldCheck,
   Loader2,
   AlertCircle,
-  Tag,
 } from "lucide-react";
 import Swal from "sweetalert2";
 
 export default function SignInPage() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [fieldError, setFieldError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage("");
+
+    const cleanEmail = email.trim();
+    if (!cleanEmail || !password) {
+      setErrorMessage("Please enter both email and password.");
+      return;
+    }
+
     setSubmitting(true);
-    setFieldError(false);
 
-    // Simulate network latency
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: cleanEmail, password }),
+      });
 
-    // Admin Auth Verification
-    if (username === "admin" && password === "VestoriaHub5248@") {
-      localStorage.setItem("adminuser", JSON.stringify({ username }));
+      const data = await res.json();
+
+      if (!res.ok) {
+        const errorText = data.error || "The email or password you entered is incorrect.";
+        setErrorMessage(errorText);
+        setPassword("");
+
+        Swal.fire({
+          icon: "error",
+          title: "Authentication Failed",
+          text: errorText,
+          confirmButtonColor: "#8467D7",
+          background: "#0f1722",
+          color: "#FFFFFF",
+          iconColor: "#F87171",
+          customClass: {
+            popup: "rounded-[16px] border border-[#33383e]",
+            confirmButton: "rounded-[8px] px-6 py-2.5 font-bold text-white",
+          },
+        });
+        return;
+      }
+
+      // Store user identity locally for UI components
+      localStorage.setItem("adminuser", JSON.stringify(data.user));
 
       Swal.fire({
         toast: true,
         position: "top-end",
         icon: "success",
         title: "Authenticated",
-        text: "Welcome back to the admin portal.",
+        text: `Welcome back, ${data.user?.name || "Admin"}!`,
         showConfirmButton: false,
         timer: 1500,
-        background: "#162B24",
-        color: "#F8F0E5",
-        iconColor: "#D9A441",
-        customClass: {
-          popup: "rounded-xl border border-[#25473C]",
-        },
+        background: "#0f1722",
+        color: "#FFFFFF",
+        iconColor: "#8467D7",
       }).then(() => {
         router.push("/admin");
+        router.refresh();
       });
-    } else {
-      setFieldError(true);
+    } catch (err) {
+      const netError = "Unable to reach the authentication server. Please check your connection.";
+      setErrorMessage(netError);
+
       Swal.fire({
         icon: "error",
-        title: "Authentication Failed",
-        text: "The username or password you entered is incorrect.",
-        confirmButtonColor: "#D9A441",
-        background: "#162B24",
-        color: "#F8F0E5",
-        iconColor: "#C1432F",
-        customClass: {
-          popup: "rounded-2xl border border-[#25473C]",
-          confirmButton: "rounded-lg px-6 py-2.5 font-bold !text-[#16241F]",
-        },
+        title: "Connection Error",
+        text: netError,
+        confirmButtonColor: "#8467D7",
+        background: "#0f1722",
+        color: "#FFFFFF",
+        iconColor: "#F87171",
       });
-      setPassword("");
+    } finally {
+      setSubmitting(false);
     }
-
-    setSubmitting(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0B1612] px-4 py-12 font-sans relative overflow-hidden">
-      {/* ─── AMBIENT BACKGROUND GLOW ACCENTS ─── */}
-      <div className="absolute -top-32 -right-32 w-[450px] h-[450px] rounded-full bg-[#D9A441]/10 pointer-events-none blur-[140px]" />
-      <div className="absolute -bottom-32 -left-32 w-[450px] h-[450px] rounded-full bg-[#1C352D]/80 pointer-events-none blur-[120px]" />
+    <div className="min-h-screen flex items-center justify-center bg-[#eff3f8] px-4 py-[40px] font-sans relative overflow-hidden">
+      {/* Ambient background blur elements */}
+      <div className="absolute -top-[160px] -right-[160px] w-[420px] h-[420px] rounded-full bg-[#8467D7]/[0.08] pointer-events-none blur-[60px]" />
+      <div className="absolute -bottom-[180px] -left-[140px] w-[380px] h-[380px] rounded-full bg-[#8467D7]/[0.05] pointer-events-none blur-[60px]" />
 
-      <div className="relative w-full max-w-[440px] animate-in fade-in slide-in-from-bottom-6 duration-500 ease-out z-10">
-        
-        {/* ─── TOP BRAND BADGE ─── */}
-        <div className="mb-6 text-center flex justify-center">
-          <span className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-[11px] font-heading font-extrabold uppercase tracking-widest bg-[#162B24] !text-[#D9A441] border border-[#25473C] shadow-lg">
-            <span className="h-2 w-2 rounded-full bg-[#D9A441] animate-pulse" />
-            VestoriaHub • Secure Portal
+      <div className="relative w-full max-w-[440px] animate-in fade-in slide-in-from-bottom-8 duration-500 ease-out">
+        {/* Top Badge */}
+        <div className="mb-[24px] text-center flex justify-center">
+          <span className="inline-flex items-center gap-[8px] rounded-[6px] px-[12px] py-[6px] text-[11px] font-bold uppercase tracking-[0.1em] bg-[#8467D7] text-white shadow-lg shadow-[#8467D7]/20">
+            <span className="h-[6px] w-[6px] rounded-full bg-[#F0E6F6] animate-pulse" />
+            Pie • Secure Portal
           </span>
         </div>
 
-        {/* ─── LOGIN CARD ─── */}
-        <div className="relative rounded-[24px] border-2 border-[#25473C] bg-[#10201B] px-6 sm:px-8 py-10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-          
+        {/* Login Card */}
+        <div className="relative rounded-[24px] border border-[#33383e] bg-[#0f1722] px-[32px] py-[40px] shadow-[0_20px_60px_rgba(3,4,10,0.6)]">
           {/* Header */}
-          <div className="text-center flex flex-col items-center gap-2 mb-8">
-            <div className="w-12 h-12 rounded-2xl bg-[#162B24] border border-[#25473C] flex items-center justify-center text-[#D9A441] shadow-inner mb-1">
-              <Tag size={22} />
+          <div className="text-center flex flex-col items-center gap-[8px] mb-[32px]">
+            <div className="w-[52px] h-[52px] rounded-[14px] bg-[#16202f] border border-[#33383e] flex items-center justify-center mb-[4px]">
+              <Sparkles size={22} className="text-[#8467D7]" />
             </div>
-            
-            <h1 className="text-[24px] sm:text-[26px] font-heading font-extrabold tracking-tight !text-[#FDFBF7] leading-tight">
+            <h1 className="text-[24px] sm:text-[28px] font-bold tracking-tight text-white leading-none">
               Admin Access
             </h1>
-            
-            <p className="text-[13.5px] !text-[#A8C3B0] font-normal">
-              Secure control for deals, stores, and content.
+            <p className="text-[14px] text-[#9fadbb]">
+              Secure management for deals, stores, and content.
             </p>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
-            
-            {/* Username Input */}
-            <div className="flex flex-col gap-2">
+          {/* Form Layout */}
+          <form onSubmit={handleSubmit} className="flex flex-col gap-[24px]" noValidate>
+            {/* Email Input Container */}
+            <div className="flex flex-col gap-[8px]">
               <label
-                htmlFor="admin-username"
-                className="text-[11.5px] font-heading font-extrabold tracking-wider uppercase !text-[#D5E4D9]"
+                htmlFor="admin-email"
+                className="text-[12px] font-bold tracking-[0.06em] uppercase text-[#9fadbb]"
               >
-                Username
+                Email Address
               </label>
-              
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                  <User size={17} className="!text-[#8A8F8C]" />
+                <span className="absolute inset-y-0 left-0 pl-[16px] flex items-center pointer-events-none">
+                  <Mail size={18} className="text-[#9fadbb] opacity-70" />
                 </span>
-                
                 <input
-                  id="admin-username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  id="admin-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   disabled={submitting}
                   required
-                  autoComplete="username"
-                  className={`w-full h-[46px] rounded-xl border-2 bg-[#162B24] pl-10 pr-4 text-[14px] !text-[#FDFBF7] placeholder-[#8A8F8C] focus:outline-none focus:ring-4 transition-all duration-200 disabled:opacity-60 ${
-                    fieldError
-                      ? "border-[#C1432F] focus:border-[#C1432F] focus:ring-[#C1432F]/15"
-                      : "border-[#25473C] focus:border-[#D9A441] focus:ring-[#D9A441]/15"
+                  autoComplete="email"
+                  className={`w-full h-[48px] rounded-[8px] border-[1.5px] bg-[#080d14] pl-[44px] pr-[16px] text-[14px] text-white placeholder-[#9fadbb]/60 focus:outline-none focus:ring-[3px] transition-all duration-200 disabled:opacity-60 ${
+                    errorMessage
+                      ? "border-red-500 focus:border-red-500 focus:ring-red-500/10"
+                      : "border-[#33383e] focus:border-[#8467D7] focus:ring-[#8467D7]/10"
                   }`}
-                  placeholder="Enter admin username"
+                  placeholder="name@takemeout.com"
                 />
               </div>
             </div>
 
-            {/* Password Input */}
-            <div className="flex flex-col gap-2">
+            {/* Password Input Container */}
+            <div className="flex flex-col gap-[8px]">
               <label
                 htmlFor="admin-password"
-                className="text-[11.5px] font-heading font-extrabold tracking-wider uppercase !text-[#D5E4D9]"
+                className="text-[12px] font-bold tracking-[0.06em] uppercase text-[#9fadbb]"
               >
                 Password
               </label>
-              
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                  <Lock size={17} className="!text-[#8A8F8C]" />
+                <span className="absolute inset-y-0 left-0 pl-[16px] flex items-center pointer-events-none">
+                  <Lock size={18} className="text-[#9fadbb] opacity-70" />
                 </span>
-                
                 <input
                   id="admin-password"
                   type={showPassword ? "text" : "password"}
@@ -165,42 +183,40 @@ export default function SignInPage() {
                   disabled={submitting}
                   required
                   autoComplete="current-password"
-                  className={`w-full h-[46px] rounded-xl border-2 bg-[#162B24] pl-10 pr-10 text-[14px] !text-[#FDFBF7] placeholder-[#8A8F8C] focus:outline-none focus:ring-4 transition-all duration-200 disabled:opacity-60 ${
-                    fieldError
-                      ? "border-[#C1432F] focus:border-[#C1432F] focus:ring-[#C1432F]/15"
-                      : "border-[#25473C] focus:border-[#D9A441] focus:ring-[#D9A441]/15"
+                  className={`w-full h-[48px] rounded-[8px] border-[1.5px] bg-[#080d14] pl-[44px] pr-[44px] text-[14px] text-white placeholder-[#9fadbb]/60 focus:outline-none focus:ring-[3px] transition-all duration-200 disabled:opacity-60 ${
+                    errorMessage
+                      ? "border-red-500 focus:border-red-500 focus:ring-red-500/10"
+                      : "border-[#33383e] focus:border-[#8467D7] focus:ring-[#8467D7]/10"
                   }`}
-                  placeholder="Enter admin password"
+                  placeholder="Enter your password"
                 />
-                
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
                   disabled={submitting}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center !text-[#8A8F8C] hover:!text-[#D9A441] transition-colors focus:outline-none"
+                  className="absolute inset-y-0 right-0 pr-[16px] flex items-center text-[#9fadbb] hover:text-[#8467D7] transition-colors focus:outline-none"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-
-              {fieldError && (
-                <span className="flex items-center gap-1 text-[12px] !text-[#C1432F] font-semibold mt-1">
-                  <AlertCircle size={13} /> Incorrect username or password.
+              {errorMessage && (
+                <span className="flex items-center gap-[6px] text-[12px] text-red-400 font-medium mt-[2px]">
+                  <AlertCircle size={13} /> {errorMessage}
                 </span>
               )}
             </div>
 
-            {/* Submit Action Button */}
+            {/* Submit CTA Button */}
             <button
               type="submit"
               disabled={submitting}
-              className="mt-2 w-full h-[48px] rounded-xl bg-gradient-to-r from-[#D9A441] via-[#E5B558] to-[#D9A441] hover:from-[#E5B558] hover:to-[#D9A441] !text-[#16241F] font-heading font-bold text-[15px] flex items-center justify-center gap-2 shadow-[0_6px_20px_rgba(217,164,65,0.25)] transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:hover:translate-y-0 disabled:cursor-not-allowed focus:outline-none"
+              className="mt-[8px] w-full h-[48px] rounded-[8px] bg-[#8467D7] hover:bg-[#9B7EE8] text-white font-semibold text-[16px] flex items-center justify-center gap-[8px] shadow-[0_8px_24px_rgba(132,103,215,0.2)] transition-all duration-200 hover:-translate-y-[2px] active:translate-y-0 disabled:opacity-70 disabled:hover:translate-y-0 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-[3px] focus-visible:ring-[#8467D7]/30"
             >
               {submitting ? (
                 <>
-                  <Loader2 size={18} className="animate-spin text-[#16241F]" />
-                  <span>Authenticating...</span>
+                  <Loader2 size={18} className="animate-spin" />
+                  Authenticating...
                 </>
               ) : (
                 "Sign in to Dashboard"
@@ -208,16 +224,16 @@ export default function SignInPage() {
             </button>
           </form>
 
-          {/* Security Subtext */}
-          <div className="mt-8 pt-6 border-t border-[#25473C] flex items-center justify-center gap-1.5 text-[11.5px] !text-[#A8C3B0] font-mono font-medium">
-            <ShieldCheck size={14} className="text-[#D9A441]" />
-            <span>Encrypted Session • Restricted Admin Access</span>
+          {/* Footer Security Isolation Note */}
+          <div className="mt-[32px] pt-[24px] border-t border-[#33383e] flex items-center justify-center gap-[6px] text-[12px] text-[#9fadbb] font-medium">
+            <ShieldCheck size={14} className="text-[#8467D7]" />
+            Encrypted Connection • Restricted Access
           </div>
         </div>
 
         {/* Global Copyright Anchor */}
-        <p className="mt-6 text-[12px] text-center !text-[#8A8F8C] font-mono">
-          © {new Date().getFullYear()} VestoriaHub.com. All rights reserved.
+        <p className="mt-[24px] text-[12px] text-center text-[#9fadbb]">
+          © {new Date().getFullYear()} takesmeout.com. All rights reserved.
         </p>
       </div>
     </div>
