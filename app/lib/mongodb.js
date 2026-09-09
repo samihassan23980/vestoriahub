@@ -7,7 +7,7 @@ if (typeof dns.setDefaultResultOrder === "function") {
 
 const username = encodeURIComponent(process.env.myusername || "");
 const password = encodeURIComponent(process.env.mypassword || "");
-const dbName = process.env.DB_NAME || "takesmeout_db";
+const dbName = process.env.DB_NAME || "vistorialhub_db";
 
 if (!username || !password) {
   throw new Error(
@@ -16,9 +16,7 @@ if (!username || !password) {
 }
 
 // Updated MongoDB URI using your new cluster string
-const MONGODB_URI = `mongodb://${username}:${password}@ac-1n1puzr-shard-00-00.rjezspk.mongodb.net:27017,ac-1n1puzr-shard-00-01.rjezspk.mongodb.net:27017,ac-1n1puzr-shard-00-02.rjezspk.mongodb.net:27017/${dbName}?ssl=true&replicaSet=atlas-1069jg-shard-0&authSource=admin&appName=Cluster0`;
-
-let cached = globalThis.mongooseCache;
+const MONGODB_URI = `mongodb://${username}:${password}@ac-9jwbydt-shard-00-00.4c4qoxs.mongodb.net:27017,ac-9jwbydt-shard-00-01.4c4qoxs.mongodb.net:27017,ac-9jwbydt-shard-00-02.4c4qoxs.mongodb.net:27017/${dbName}?ssl=true&replicaSet=atlas-nhaa08-shard-0&authSource=admin&appName=Cluster0`;let cached = globalThis.mongooseCache;
 
 if (!cached) {
   cached = globalThis.mongooseCache = {
