@@ -4,6 +4,10 @@ import React, { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Swal from "sweetalert2";
+
+// ─── EXACT ISOLATED THEME IMPORT ─────────────────────────────────────────────
+import "./admin-theme.css";
+
 import {
   LayoutDashboard,
   Menu,
@@ -285,34 +289,23 @@ const AdminLayout = ({ children }) => {
     setIsSidebarOpen(false);
   }, [pathname]);
 
-  // ─── LOGOUT (CALLS API TO PURGE COOKIES + CLEARS LOCALSTORAGE) ───────────
+  // ─── LOGOUT ─────────────────────────────────────────────────────────────
   const handleLogout = () => {
     Swal.fire({
       title: "Sign Out",
       text: "Are you sure you want to log out of the admin panel?",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#8467D7",
-      cancelButtonColor: "#33383e",
       confirmButtonText: "Yes, sign out",
       cancelButtonText: "Cancel",
-      background: "#0f1722",
-      color: "#f9fafb",
-      customClass: {
-        popup: "rounded-[16px] border border-[#33383e]",
-        confirmButton: "rounded-[8px] font-bold px-5 py-2 text-white",
-        cancelButton: "rounded-[8px] font-bold px-5 py-2 text-white",
-      },
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          // Server cookies flush karein
           await fetch("/api/auth/logout", { method: "POST" });
         } catch (e) {
           console.error("Logout API call failed:", e);
         }
 
-        // Local storage clear karein
         localStorage.removeItem("adminuser");
 
         Swal.fire({
@@ -322,9 +315,6 @@ const AdminLayout = ({ children }) => {
           title: "Signed out successfully",
           showConfirmButton: false,
           timer: 1200,
-          background: "#0f1722",
-          color: "#f9fafb",
-          iconColor: "#8467D7",
         }).then(() => {
           router.push("/signin");
           router.refresh();
@@ -335,18 +325,18 @@ const AdminLayout = ({ children }) => {
 
   if (isAuthChecking) {
     return (
-      <div className="h-screen w-screen flex flex-col items-center justify-center bg-[#080d14] font-sans">
+      <div className="admin-isolated-theme h-screen w-screen flex flex-col items-center justify-center font-sans">
         <div className="relative flex items-center justify-center mb-6">
-          <div className="absolute w-[80px] h-[80px] border-[3px] border-[#8467D7] rounded-full animate-ping opacity-20" />
-          <div className="w-[64px] h-[64px] bg-[#0f1722] border border-[#33383e] rounded-full flex items-center justify-center shadow-xl z-10">
-            <ShieldCheck size={32} className="text-[#8467D7]" />
+          <div className="absolute w-[80px] h-[80px] border-[3px] rounded-full animate-ping opacity-25" />
+          <div className="w-[64px] h-[64px] rounded-full flex items-center justify-center shadow-sm z-10 border">
+            <ShieldCheck size={32} />
           </div>
         </div>
-        <h2 className="text-[#f9fafb] text-[24px] font-bold tracking-tight mb-2">
+        <h2 className="text-[24px] font-bold tracking-tight mb-2">
           Verifying Access
         </h2>
-        <p className="text-[#9fadbb] text-[14px] flex items-center gap-2 font-medium">
-          <Loader2 size={16} className="animate-spin text-[#8467D7]" />
+        <p className="text-[14px] flex items-center gap-2 font-medium">
+          <Loader2 size={16} className="animate-spin" />
           Securing connection...
         </p>
       </div>
@@ -359,37 +349,35 @@ const AdminLayout = ({ children }) => {
   const initials = getInitials(displayName);
 
   return (
-    <div className="admin-isolated-theme flex h-screen bg-[#080d14] font-sans overflow-hidden text-white w-full">
+    <div className="admin-isolated-theme flex h-screen font-sans overflow-hidden w-full">
       {/* ─── MOBILE SIDEBAR OVERLAY ─── */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm lg:hidden transition-opacity duration-300"
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden transition-opacity duration-300"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
       {/* ─── SIDEBAR ─── */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-[260px] transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 shrink-0 border-r border-[#33383e] bg-[#0f1722] ${
+        className={`fixed inset-y-0 left-0 z-50 w-[260px] transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 shrink-0 border-r ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex flex-col h-full">
           {/* Logo Section */}
-          <div className="h-[72px] flex items-center justify-between px-6 border-b border-[#33383e] shrink-0">
+          <div className="h-[72px] flex items-center justify-between px-6 border-b shrink-0">
             <Link
               href="/admin"
               className="flex items-center gap-1.5 focus:outline-none"
             >
-         
-              <span className="font-heading font-black text-lg tracking-tight text-white">
-                Pie<span className="text-[#8467D7]">Solution</span>
+              <span className="font-heading font-black text-lg tracking-tight">
+                Pie<span>Solution</span>
               </span>
-            
             </Link>
             <button
               onClick={() => setIsSidebarOpen(false)}
-              className="lg:hidden p-2 rounded-lg hover:bg-[#16202f] text-[#9fadbb] hover:text-white transition-colors"
+              className="lg:hidden p-2 rounded-lg transition-colors"
             >
               <X size={20} />
             </button>
@@ -399,7 +387,7 @@ const AdminLayout = ({ children }) => {
           <div className="flex-1 overflow-y-auto py-6 px-4 space-y-8 custom-scrollbar">
             {visibleNavGroups.map((group, idx) => (
               <div key={idx}>
-                <h3 className="px-3 text-[11px] font-bold uppercase tracking-wider text-[#9fadbb] opacity-70 mb-3">
+                <h3 className="px-3 text-[11px] font-bold uppercase tracking-wider mb-3">
                   {group.title}
                 </h3>
                 <ul className="space-y-1">
@@ -412,23 +400,17 @@ const AdminLayout = ({ children }) => {
                         <Link
                           href={item.href}
                           className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all duration-200 group ${
-                            isActive
-                              ? "bg-[#8467D7] text-white shadow-md shadow-[#8467D7]/20"
-                              : "text-[#9fadbb] hover:bg-[#16202f] hover:text-white"
+                            isActive ? "bg-primary" : ""
                           }`}
                         >
                           <item.icon
                             size={18}
                             strokeWidth={isActive ? 2.5 : 2}
-                            className={
-                              isActive
-                                ? "text-white"
-                                : "text-[#9fadbb] group-hover:text-white transition-colors"
-                            }
+                            className="transition-colors"
                           />
                           <span className="flex-1 truncate">{item.name}</span>
                           {isActive && (
-                            <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px_#fff]" />
+                            <div className="w-1.5 h-1.5 rounded-full" />
                           )}
                         </Link>
                       </li>
@@ -440,25 +422,25 @@ const AdminLayout = ({ children }) => {
           </div>
 
           {/* User Profile Footer */}
-          <div className="p-4 border-t border-[#33383e] shrink-0 bg-[#080d14]/40">
+          <div className="p-4 border-t shrink-0">
             <div
               onClick={handleLogout}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#16202f] transition-colors cursor-pointer group"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors cursor-pointer group"
             >
-              <div className="w-9 h-9 rounded-full bg-[#8467D7] flex items-center justify-center font-bold text-white shrink-0 shadow-sm">
+              <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold shrink-0 shadow-sm border">
                 {initials}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-bold text-white truncate leading-tight">
+                <p className="text-[13px] font-bold truncate leading-tight">
                   {displayName}
                 </p>
-                <p className="text-[11px] text-[#9fadbb] font-medium truncate mt-0.5">
+                <p className="text-[11px] font-medium truncate mt-0.5">
                   {displayRole}
                 </p>
               </div>
               <LogOut
                 size={16}
-                className="text-[#9fadbb] group-hover:text-red-400 transition-colors shrink-0"
+                className="transition-colors shrink-0"
               />
             </div>
           </div>
@@ -468,11 +450,11 @@ const AdminLayout = ({ children }) => {
       {/* ─── MAIN CONTENT AREA ─── */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         {/* Top Navbar Header */}
-        <header className="h-[72px] bg-[#0f1722] border-b border-[#33383e] flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0 z-30">
+        <header className="h-[72px] flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0 z-30">
           <div className="flex items-center gap-4 flex-1">
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="lg:hidden p-2 -ml-2 text-[#9fadbb] hover:text-white hover:bg-[#16202f] rounded-lg transition-all"
+              className="lg:hidden p-2 -ml-2 rounded-lg transition-all"
             >
               <Menu size={22} />
             </button>
@@ -481,36 +463,36 @@ const AdminLayout = ({ children }) => {
             <div className="hidden sm:flex items-center relative w-full max-w-md group">
               <Search
                 size={18}
-                className="absolute left-4 text-[#9fadbb] opacity-60 group-focus-within:text-[#8467D7] group-focus-within:opacity-100 transition-colors"
+                className="absolute left-4 opacity-70 transition-colors"
               />
               <input
                 type="text"
                 placeholder="Search coupons, stores, or blogs..."
-                className="w-full pl-11 pr-12 py-2.5 bg-[#080d14] border border-[#33383e] rounded-full text-[13px] text-white placeholder:text-[#9fadbb]/60 focus:outline-none focus:border-[#8467D7] transition-all font-medium"
+                className="w-full pl-11 pr-12 py-2.5 rounded-full text-[13px] border transition-all font-medium"
               />
-              <div className="absolute right-3 px-2 py-0.5 rounded text-[10px] font-bold text-[#9fadbb] bg-[#0f1722] border border-[#33383e]">
+              <div className="absolute right-3 px-2 py-0.5 rounded text-[10px] font-bold border">
                 ⌘K
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-3 sm:gap-5 ml-4">
-            <button className="relative p-2 text-[#9fadbb] hover:text-white hover:bg-[#16202f] rounded-lg transition-all">
+            <button className="relative p-2 rounded-lg transition-all">
               <Bell size={20} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-[#FF6F61] rounded-full border-2 border-[#0f1722]" />
+              <span className="absolute top-2 right-2 w-2 h-2 rounded-full border" />
             </button>
 
-            <div className="h-6 w-[1px] bg-[#33383e] hidden sm:block" />
+            <div className="h-6 w-[1px] hidden sm:block border-r" />
 
             <div className="flex items-center gap-2.5 p-1 pr-3 rounded-full border border-transparent">
-              <div className="w-8 h-8 rounded-full bg-[#8467D7] flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
-                <span className="text-white font-bold text-[12px]">{initials}</span>
+              <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden shrink-0 shadow-sm border">
+                <span className="font-bold text-[12px]">{initials}</span>
               </div>
               <div className="text-left hidden md:block">
-                <p className="text-[12px] font-bold text-white leading-none">
+                <p className="text-[12px] font-bold leading-none">
                   {displayName}
                 </p>
-                <p className="text-[10px] font-medium text-[#9fadbb] leading-none mt-1">
+                <p className="text-[10px] font-medium leading-none mt-1">
                   {displayRole}
                 </p>
               </div>
@@ -519,8 +501,8 @@ const AdminLayout = ({ children }) => {
         </header>
 
         {/* Dynamic Children Canvas */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-[#080d14] custom-scrollbar">
-          <div className="min-h-full p-4 sm:p-6 lg:p-8 text-white">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
+          <div className="min-h-full p-4 sm:p-6 lg:p-8">
             {children}
           </div>
         </main>
