@@ -3,7 +3,7 @@ import { connectDB } from "@/app/lib/mongodb";
 import SiteSettings from "@/app/models/siteSettings";
 import { revalidateTag } from "next/cache";
 
-const SINGLETON_ID = "takesmeout-global";
+const SINGLETON_ID = "VestoriaHub-global";
 
 export async function GET(req) {
   try {

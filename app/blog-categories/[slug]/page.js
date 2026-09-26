@@ -217,14 +217,10 @@ export default async function BlogCategoryDetailsPage({ params }) {
                 About {category.name} Guides
               </h2>
             </div>
-            <div className="space-y-3.5 text-[14px] leading-relaxed text-[#6B7280] font-normal prose max-w-none">
-              {category.description
-                .split("\n")
-                .filter(Boolean)
-                .map((para, i) => (
-                  <p key={i}>{para}</p>
-                ))}
-            </div>
+            <div
+              className="space-y-3.5 text-[14px] leading-relaxed text-[#6B7280] font-normal prose max-w-none"
+              dangerouslySetInnerHTML={{ __html: category.description }}
+            />
           </div>
         </section>
       )}

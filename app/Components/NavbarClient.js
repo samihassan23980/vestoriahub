@@ -24,7 +24,7 @@ export default function NavbarClient({ categoryItems = [] }) {
     { name: "Home", slug: "/" },
     { name: "Products", slug: "/products", isFeatured: true },
     { name: "Categories", slug: "/categories" },
-    { name: "Stores", slug: "/stores" },
+   /*  { name: "Stores", slug: "/stores" }, */
     { name: "Blog", slug: "/blogs" },
     { name: "About", slug: "/legal/about" },
     { name: "Contact", slug: "/legal/contact" },

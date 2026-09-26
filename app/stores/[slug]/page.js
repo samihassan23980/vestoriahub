@@ -5,6 +5,7 @@ import Coupon from "@/app/models/coupon";
 import "@/app/models/category";
 import { unstable_cache } from "next/cache";
 import SingleStoreClient from "@/app/Components/SingleStoreClient";
+import StoreVisitTracker from "@/app/lib/Storevisittracker";
 
 
 const SIMILAR_STORES_LIMIT = 4;
@@ -126,5 +127,11 @@ export default async function Page({ params }) {
     notFound();
   }
 
-  return <SingleStoreClient initialData={data} slug={slug} />;
+  return (   <>
+        <StoreVisitTracker
+          storeId={data.store._id}
+          categoryId={data.store.primaryCategoryId?._id}
+        />
+        <SingleStoreClient initialData={data} slug={slug} />
+      </>);
 }

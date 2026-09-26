@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -24,6 +24,7 @@ import {
   Layers,
   ArrowUpRight,
 } from "lucide-react";
+import { trackEvent } from "../lib/Tracking";
 
 // --- HELPERS ---
 
@@ -32,16 +33,6 @@ function formatDiscount(type, value) {
   if (type === "flat") return `$${value} OFF`;
   if (type === "free_shipping") return "FREE SHIP";
   return "VERIFIED DEAL";
-}
-
-function formatExpiry(dateString) {
-  if (!dateString) return "Ongoing Promo";
-  const days = Math.ceil(
-    (new Date(dateString) - new Date()) / (1000 * 60 * 60 * 24),
-  );
-  if (days < 0) return "Expired";
-  if (days === 0) return "Ends today";
-  return `Ends in ${days}d`;
 }
 
 function buildTermsLine(coupon) {
@@ -66,31 +57,51 @@ function formatVerifiedDate(dateString) {
   return "Verified";
 }
 
-function getSimulatedStats(idStr) {
-  const num = parseInt(idStr.substring(0, 4), 16) || 100;
-  return {
-    uses: (num % 800) + 50,
-    mins: (num % 59) + 1,
-  };
-}
-
 // --- SUB-COMPONENTS ---
 
 const GridCouponCard = ({ coupon }) => {
   const [copied, setCopied] = useState(false);
-  const stats = getSimulatedStats(coupon._id || "a1b2");
+  const cardRef = useRef(null);
   const termsLine = buildTermsLine(coupon);
   const verifiedLabel = formatVerifiedDate(coupon.verifiedAt);
   const isPromoCode = coupon.type === "coupon" && coupon.codeType === "public";
 
+  // TRACKING: `coupon_view` fires once, when at least half of the card is
+  // visible on screen. (The API also ignores repeats from the same visitor.)
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el || !coupon._id) return;
+
+    if (typeof IntersectionObserver === "undefined") {
+      trackEvent("coupon_view", { couponId: coupon._id });
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          trackEvent("coupon_view", { couponId: coupon._id });
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [coupon._id]);
+
   const handleCopy = async (e) => {
     e.preventDefault();
+    // TRACKING: every press on the code box / "Copy Code & Open Store" is a coupon click.
+    trackEvent("coupon_click", { couponId: coupon._id });
     if (!coupon.code) return;
     try {
       await navigator.clipboard.writeText(coupon.code);
       setCopied(true);
 
       if (coupon.trackingLink) {
+        // TRACKING: the user is being sent to the store's affiliate link.
+        trackEvent("outbound_redirect", { couponId: coupon._id });
         window.open(coupon.trackingLink, "_blank");
       }
 
@@ -101,13 +112,17 @@ const GridCouponCard = ({ coupon }) => {
   };
 
   const handleDealClick = () => {
+    // TRACKING: every press on "Activate Offer" is a coupon click.
+    trackEvent("coupon_click", { couponId: coupon._id });
     if (coupon.trackingLink) {
+      // TRACKING: deal without a code, straight to the affiliate link.
+      trackEvent("outbound_redirect", { couponId: coupon._id });
       window.open(coupon.trackingLink, "_blank");
     }
   };
 
   return (
-    <div className="group relative flex flex-col justify-between rounded-[22px] bg-[#FFFFFF] border-2 border-[#E2D9CC] hover:border-[#BDD6C4] p-5 shadow-xs hover:shadow-[0_14px_36px_rgba(28,53,45,0.09)] transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+    <div ref={cardRef} className="group relative flex flex-col justify-between rounded-[22px] bg-[#FFFFFF] border-2 border-[#E2D9CC] hover:border-[#BDD6C4] p-5 shadow-xs hover:shadow-[0_14px_36px_rgba(28,53,45,0.09)] transition-all duration-300 hover:-translate-y-1 overflow-hidden">
       
       {/* Top Banner & Discount Pill */}
       <div>
@@ -130,10 +145,6 @@ const GridCouponCard = ({ coupon }) => {
               </span>
             )}
           </div>
-
-          <span className="text-[11px] font-mono font-semibold !text-[#8A8F8C]">
-            {formatExpiry(coupon.expiryDate)}
-          </span>
         </div>
 
         {/* Discount Value Display */}
@@ -160,7 +171,7 @@ const GridCouponCard = ({ coupon }) => {
         )}
       </div>
 
-      {/* Action Zone & Stats Bottom */}
+      {/* Action Zone Bottom */}
       <div className="pt-3 border-t border-[#E2D9CC] mt-auto">
         {isPromoCode ? (
           <div className="flex flex-col gap-2">
@@ -204,16 +215,6 @@ const GridCouponCard = ({ coupon }) => {
             <ArrowUpRight size={15} strokeWidth={2.5} className="text-[#D9A441] group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
           </button>
         )}
-
-        {/* Live Social Proof */}
-        <div className="flex items-center justify-between text-[11px] font-mono text-[#8A8F8C] font-semibold mt-3 pt-2">
-          <span className="flex items-center gap-1 text-[#427867]">
-            <Users size={12} /> {stats.uses} uses today
-          </span>
-          <span className="flex items-center gap-1">
-            <Clock size={12} /> {stats.mins}m ago
-          </span>
-        </div>
       </div>
     </div>
   );
@@ -379,6 +380,9 @@ export default function SingleStoreClient({ initialData, slug }) {
                 href={store.officialUrl}
                 target="_blank"
                 rel="noopener noreferrer nofollow sponsored"
+                onClick={() =>
+                  trackEvent("outbound_redirect", { storeId: store._id })
+                }
                 className="inline-flex items-center gap-1.5 bg-[#D9A441] hover:bg-[#BE8E34] text-[#16241F] text-[12.5px] font-heading font-bold px-4 py-2 rounded-xl transition-all shadow-sm active:scale-98"
               >
                 <Globe size={14} />
@@ -443,11 +447,15 @@ export default function SingleStoreClient({ initialData, slug }) {
                 </h3>
               </div>
 
-              <div className="text-[14.5px] text-[#6B7280] leading-relaxed font-normal mb-6">
-                {store?.content?.longDescription ||
-                  store?.content?.shortDescription ||
-                  `${store?.name} provides competitive catalog offerings and verified shopper perks across all product tiers.`}
-              </div>
+              <div
+                className="text-[14.5px] text-[#6B7280] leading-relaxed font-normal mb-6 prose max-w-none"
+                dangerouslySetInnerHTML={{
+                  __html:
+                    store?.content?.longDescription ||
+                    store?.content?.shortDescription ||
+                    `${store?.name} provides competitive catalog offerings and verified shopper perks across all product tiers.`,
+                }}
+              />
 
               {/* Store Quick Facts Grid */}
               {factEntries.length > 0 && (
