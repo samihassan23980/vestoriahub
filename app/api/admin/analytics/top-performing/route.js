@@ -1,17 +1,16 @@
 /**
- * GET /api/admin/analytics/top-performing?range=30d&limit=5
+ * GET /api/admin/analytics/top-performing?range=30d|today|yesterday&limit=10
  * Add admin auth (see main analytics route).
  *
  * Existing keys (coupons, blogs, stores) keep their old shape.
- * New keys: products, deals, embeds.
+ * New keys: products, deals, storeClicks, embeds.
  */
 
 import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import {
-  parseDays,
+  parseRange,
   parseLimit,
-  daysAgo,
   getTopPerforming,
 } from "@/app/lib/analyticsQueries";
 
@@ -21,14 +20,18 @@ export async function GET(req) {
   try {
     await connectDB();
     const { searchParams } = new URL(req.url);
-    const days = parseDays(searchParams, 30);
-    const limit = parseLimit(searchParams, 5);
+    const { label, startCurrent, endCurrent } = parseRange(searchParams, 30);
+    const limit = parseLimit(searchParams, 10);
 
-    const top = await getTopPerforming({ startDate: daysAgo(days), limit });
+    const top = await getTopPerforming({
+      startDate: startCurrent,
+      endDate: endCurrent,
+      limit,
+    });
 
     return NextResponse.json(
       {
-        timeframe: `Last ${days} days`,
+        timeframe: label,
         topPerforming: {
           coupons: top.coupons.map((c) => ({
             coupon: {

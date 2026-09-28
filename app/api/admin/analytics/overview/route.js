@@ -1,5 +1,5 @@
 /**
- * GET /api/admin/analytics/overview?range=30d   (or ?days=N, max 90)
+ * GET /api/admin/analytics/overview?range=30d|today|yesterday   (or ?days=N, max 90)
  * Lightweight event counters. Add admin auth (see main analytics route).
  */
 
@@ -9,8 +9,7 @@ import {
   AnalyticsEvent,
   ANALYTICS_EVENT_TYPES,
   CONVERSION_TYPES,
-  parseDays,
-  daysAgo,
+  parseRange,
 } from "@/app/lib/analyticsQueries";
 
 export const dynamic = "force-dynamic";
@@ -19,11 +18,10 @@ export async function GET(req) {
   try {
     await connectDB();
     const { searchParams } = new URL(req.url);
-    const days = parseDays(searchParams, 30);
-    const startDate = daysAgo(days);
+    const { label, startCurrent, endCurrent } = parseRange(searchParams, 30);
 
     const results = await AnalyticsEvent.aggregate([
-      { $match: { createdAt: { $gte: startDate } } },
+      { $match: { createdAt: { $gte: startCurrent, $lt: endCurrent } } },
       { $group: { _id: "$eventType", count: { $sum: 1 } } },
     ]);
 
@@ -50,8 +48,8 @@ export async function GET(req) {
 
     return NextResponse.json(
       {
-        timeframe: `Last ${days} days`,
-        startDate,
+        timeframe: label,
+        startDate: startCurrent,
         stats,
         summary: { totalInteractions, totalClicks, totalConversions },
       },

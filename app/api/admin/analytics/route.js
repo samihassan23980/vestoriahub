@@ -1,9 +1,15 @@
 /**
- * GET /api/admin/analytics?range=7d|30d|90d   (or ?days=N, max 90)
+ * GET /api/admin/analytics?range=7d|30d|90d|today|yesterday   (or ?days=N, max 90)
+ *                          &limit=5..50   (how deep each "Top ..." list goes)
  *
  * Dashboard payload. Response shape is backward compatible with the existing
  * Analytics page (kpis, eventBreakdown, geoData, recentEvents, topCoupons ...)
  * and adds: tops, uniqueVisitors, zero-filled timeSeries, meta.
+ *
+ * "today" / "yesterday" switch the whole payload to an EXACT calendar day
+ * (ANALYTICS_TZ) instead of a rolling window: the time series becomes hourly
+ * (00:00 .. 23:00) and every KPI/top-list is compared against the day right
+ * before it (today vs yesterday, yesterday vs the day before that).
  *
  * SECURITY: this endpoint exposes business data. Make sure it is protected by
  * your admin auth (middleware or a session check at the top of GET).
@@ -19,10 +25,10 @@ import {
   VIEW_TYPES,
   LANDING_TYPES,
   RETENTION_DAYS,
-  parseDays,
+  parseRange,
   parseLimit,
-  daysAgo,
   buildDayKeys,
+  buildHourKeys,
   getTopPerforming,
 } from "@/app/lib/analyticsQueries";
 
@@ -87,6 +93,13 @@ function hostOf(url) {
 
 const compact = (n) => (n > 999 ? `${(n / 1000).toFixed(1)}K` : String(n));
 
+// "2026-09-21" -> "Sep 21" (display label for a daily bucket)
+const shortDateLabel = (key) =>
+  new Date(`${key}T00:00:00`).toLocaleDateString("en", {
+    month: "short",
+    day: "numeric",
+  });
+
 /** Human readable target of an event (works with populated refs). */
 function resolveTarget(evt) {
   const coupon = evt.couponId?.title;
@@ -128,16 +141,25 @@ export async function GET(req) {
     await connectDB();
 
     const { searchParams } = new URL(req.url);
-    const days = parseDays(searchParams, 30);
-    const limit = parseLimit(searchParams, 5);
+    const {
+      mode,
+      label: rangeLabel,
+      compareLabel,
+      granularity,
+      days,
+      startCurrent,
+      endCurrent,
+      startPrevious,
+      endPrevious,
+      hasPrevious,
+    } = parseRange(searchParams, 30);
+    const limit = parseLimit(searchParams, 10);
 
-    const now = Date.now();
-    const startCurrent = daysAgo(days, now);
-    const startPrevious = daysAgo(days * 2, now);
-    // The previous window only exists if it is inside the retention period.
-    const hasPrevious = days * 2 <= RETENTION_DAYS;
-
-    const currentMatch = { createdAt: { $gte: startCurrent } };
+    // Every "current period" query shares this exact window — for a rolling
+    // range endCurrent is just "now" (nothing exists past it anyway); for
+    // "yesterday" it is today's local midnight, which is what actually keeps
+    // today's events out of yesterday's numbers.
+    const currentMatch = { createdAt: { $gte: startCurrent, $lt: endCurrent } };
 
     // Exclude our own site from "traffic sources" (internal navigation).
     const ownHost = hostOf(process.env.NEXT_PUBLIC_SITE_URL || "");
@@ -156,7 +178,10 @@ export async function GET(req) {
       AnalyticsEvent.aggregate([
         {
           $match: {
-            createdAt: { $gte: hasPrevious ? startPrevious : startCurrent },
+            createdAt: {
+              $gte: hasPrevious ? startPrevious : startCurrent,
+              $lt: endCurrent,
+            },
           },
         },
         {
@@ -170,15 +195,15 @@ export async function GET(req) {
         },
       ]),
 
-      // Daily series in the analytics timezone
+      // Time series: daily buckets for a rolling window, HOURLY for a single day.
       AnalyticsEvent.aggregate([
         { $match: currentMatch },
         {
           $group: {
             _id: {
-              date: {
+              bucket: {
                 $dateToString: {
-                  format: "%Y-%m-%d",
+                  format: granularity === "hour" ? "%H:00" : "%Y-%m-%d",
                   date: "$createdAt",
                   timezone: ANALYTICS_TZ,
                 },
@@ -243,7 +268,7 @@ export async function GET(req) {
         { $count: "n" },
       ]),
 
-      getTopPerforming({ startDate: startCurrent, limit }),
+      getTopPerforming({ startDate: startCurrent, endDate: endCurrent, limit }),
 
       AnalyticsEvent.find(currentMatch)
         .sort({ createdAt: -1 })
@@ -294,23 +319,26 @@ export async function GET(req) {
       }))
       .sort((a, b) => b.count - a.count);
 
-    // ── Time series (zero-filled, every day present) ──────────────────────
-    const seriesByDate = {};
-    for (const key of buildDayKeys(days, now)) {
-      seriesByDate[key] = {
-        date: key,
+    // ── Time series (zero-filled: daily buckets for a range, hourly for a day) ─
+    const bucketKeys =
+      granularity === "hour" ? buildHourKeys() : buildDayKeys(days, Date.now());
+    const seriesByBucket = {};
+    for (const key of bucketKeys) {
+      seriesByBucket[key] = {
+        key, // raw sort/CSV key: "2026-09-21" or "14:00"
+        label: granularity === "hour" ? key : shortDateLabel(key), // display label
         total: 0,
         ...Object.fromEntries(ANALYTICS_EVENT_TYPES.map((t) => [t, 0])),
       };
     }
     for (const item of timeSeriesRaw) {
-      const row = seriesByDate[item._id.date];
+      const row = seriesByBucket[item._id.bucket];
       if (!row) continue; // bucket outside the window edge
       row[item._id.type] = item.count;
       row.total += item.count;
     }
-    const timeSeries = Object.values(seriesByDate).sort((a, b) =>
-      a.date.localeCompare(b.date),
+    const timeSeries = Object.values(seriesByBucket).sort((a, b) =>
+      a.key.localeCompare(b.key),
     );
 
     // ── Geo ───────────────────────────────────────────────────────────────
@@ -346,9 +374,14 @@ export async function GET(req) {
       success: true,
       data: {
         meta: {
+          mode, // "day" | "range"
+          label: rangeLabel, // "Today" / "Yesterday" / "Last 30 days"
+          compareLabel, // "vs yesterday" / "vs previous 30 days"
+          granularity, // "hour" | "day"
           days,
+          limit,
           from: startCurrent,
-          to: new Date(now),
+          to: endCurrent,
           timezone: ANALYTICS_TZ,
           retentionDays: RETENTION_DAYS,
           comparesToPrevious: hasPrevious,
@@ -391,7 +424,7 @@ export async function GET(req) {
           count: r.count,
         })),
         topCoupons: tops.coupons, // kept for the existing UI
-        tops, // coupons, products, deals, stores, blogs, embeds
+        tops, // coupons, products, deals, stores, storeClicks, blogs, embeds
         geoData,
         recentEvents,
       },

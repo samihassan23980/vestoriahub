@@ -2,7 +2,7 @@
 
 /**
  * Admin Analytics Dashboard
- * Data source: GET /api/admin/analytics?range=7d|30d|90d
+ * Data source: GET /api/admin/analytics?range=today|yesterday|7d|30d|90d&limit=N
  *
  * File layout (read top to bottom):
  *   1. Config + tiny helpers
@@ -38,15 +38,25 @@ import {
   FileText,
   LayoutTemplate,
   Activity,
+  CalendarClock,
 } from "lucide-react";
 
 // ─── 1. Config + helpers ─────────────────────────────────────────────────────
 
+// "today" / "yesterday" are exact calendar days (hourly chart, day-over-day
+// compare). 7d/30d/90d stay rolling windows, same as before.
 const RANGES = [
-  { value: "7d", label: "7 Days", days: 7 },
-  { value: "30d", label: "30 Days", days: 30 },
-  { value: "90d", label: "90 Days", days: 90 },
+  { value: "today", label: "Today" },
+  { value: "yesterday", label: "Yesterday" },
+  { value: "7d", label: "7 Days" },
+  { value: "30d", label: "30 Days" },
+  { value: "90d", label: "90 Days" },
 ];
+
+// How deep each "Top ..." panel goes. Once a site has real traffic, several
+// coupons/stores land on the same click count — raise this to see past the
+// first 5 instead of guessing who's tied.
+const LIMIT_OPTIONS = [5, 10, 20, 50];
 
 const CARD =
   "bg-white border border-[#E0DEF5] rounded-xl shadow-[0_2px_12px_rgba(26,19,64,0.04)]";
@@ -70,12 +80,21 @@ function timeAgo(dateString, now) {
   return d === 1 ? "Yesterday" : `${d} days ago`;
 }
 
-// "2026-09-21" -> "Sep 21"
-const shortDate = (key) =>
-  new Date(`${key}T00:00:00`).toLocaleDateString("en", {
-    month: "short",
-    day: "numeric",
-  });
+// meta.from / meta.to -> "Sep 26, 2026" (day mode) or "Sep 20 – Sep 26, 2026" (range mode)
+function formatWindow(meta) {
+  if (!meta?.from) return "";
+  const fmt = (d) =>
+    new Date(d).toLocaleDateString("en", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      timeZone: meta.timezone,
+    });
+  if (meta.mode === "day") return fmt(meta.from);
+  const inclusiveTo = new Date(meta.to);
+  inclusiveTo.setSeconds(inclusiveTo.getSeconds() - 1); // "to" is exclusive (now)
+  return `${fmt(meta.from)} – ${fmt(inclusiveTo)}`;
+}
 
 // Trend strings from the API: "+12.3%", "-5.0%", "New", "N/A", "0%"
 function trendMeta(trend = "") {
@@ -175,14 +194,14 @@ const DeviceIcon = ({ device, size = 16, className = "text-[#7775A0]" }) => {
   return <Icon size={size} className={className} />;
 };
 
-// Download the daily series as CSV (date, total, one column per event type).
+// Download the time series as CSV (bucket, total, one column per event type).
 function exportCsv(data, rangeValue) {
   const series = data.timeSeries || [];
   const types = Object.keys(series[0] || {}).filter(
-    (k) => k !== "date" && k !== "total",
+    (k) => !["key", "label", "total"].includes(k),
   );
-  const header = ["date", "total", ...types];
-  const rows = series.map((row) => header.map((h) => row[h] ?? 0));
+  const header = ["bucket", "total", ...types];
+  const rows = series.map((row) => header.map((h) => (h === "bucket" ? row.key : row[h] ?? 0)));
   const csv = [header, ...rows].map((r) => r.join(",")).join("\n");
 
   const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
@@ -195,8 +214,8 @@ function exportCsv(data, rangeValue) {
 
 // ─── 2. Hooks ────────────────────────────────────────────────────────────────
 
-/** Fetches analytics for a range. Keeps the old data on screen while reloading. */
-function useAnalytics(range) {
+/** Fetches analytics for a range + limit. Keeps the old data on screen while reloading. */
+function useAnalytics(range, limit) {
   const [state, setState] = useState({ data: null, loading: true, error: null });
   const [tick, setTick] = useState(0);
 
@@ -206,7 +225,7 @@ function useAnalytics(range) {
 
     (async () => {
       try {
-        const res = await fetch(`/api/admin/analytics?range=${range}`, {
+        const res = await fetch(`/api/admin/analytics?range=${range}&limit=${limit}`, {
           signal: controller.signal,
           cache: "no-store",
         });
@@ -216,14 +235,14 @@ function useAnalytics(range) {
         }
         setState({ data: json.data, loading: false, error: null });
       } catch (err) {
-        if (err.name === "AbortError") return; // range changed or page left
+        if (err.name === "AbortError") return; // range/limit changed or page left
         console.error("Analytics fetch error:", err);
         setState((s) => ({ ...s, loading: false, error: err.message }));
       }
     })();
 
     return () => controller.abort();
-  }, [range, tick]);
+  }, [range, limit, tick]);
 
   return { ...state, reload: () => setTick((t) => t + 1) };
 }
@@ -320,8 +339,13 @@ function KpiCard({ title, value, icon: Icon, color, bg, trend, note }) {
   );
 }
 
-/** Dependency-free SVG area chart of total events per day with a hover tooltip. */
-function TrafficChart({ series }) {
+/**
+ * Dependency-free SVG area chart with a hover tooltip. Works for both daily
+ * buckets (rolling ranges) and hourly buckets (Today / Yesterday) — the API
+ * always sends a ready-to-display `label` per point, so this component never
+ * needs to know which mode it's in.
+ */
+function TrafficChart({ series, emptyText }) {
   const [hover, setHover] = useState(null);
   const W = 800;
   const H = 220;
@@ -333,7 +357,7 @@ function TrafficChart({ series }) {
   const y = (v) => pad.t + (1 - v / max) * (H - pad.t - pad.b);
 
   if (!series.length || series.every((d) => d.total === 0)) {
-    return <Empty text="No events recorded for this period." />;
+    return <Empty text={emptyText || "No events recorded for this period."} />;
   }
 
   const line = series
@@ -356,7 +380,9 @@ function TrafficChart({ series }) {
 
   const point = hover !== null ? series[hover] : null;
   const breakdown = point
-    ? Object.entries(point).filter(([k, v]) => k !== "date" && k !== "total" && v > 0)
+    ? Object.entries(point).filter(
+        ([k, v]) => !["key", "label", "total"].includes(k) && v > 0,
+      )
     : [];
 
   return (
@@ -365,7 +391,7 @@ function TrafficChart({ series }) {
         viewBox={`0 0 ${W} ${H}`}
         className="w-full h-auto"
         role="img"
-        aria-label="Total events per day"
+        aria-label="Events over time"
         onMouseMove={onMove}
         onMouseLeave={() => setHover(null)}
       >
@@ -390,7 +416,7 @@ function TrafficChart({ series }) {
 
         {labelIdx.map((i) => (
           <text key={i} x={x(i)} y={H - 6} textAnchor={i === 0 ? "start" : i === series.length - 1 ? "end" : "middle"} fontSize="11" fill="#7775A0">
-            {shortDate(series[i].date)}
+            {series[i].label}
           </text>
         ))}
 
@@ -410,7 +436,7 @@ function TrafficChart({ series }) {
             transform: hover > series.length / 2 ? "translateX(-105%)" : "translateX(8px)",
           }}
         >
-          <p className="font-bold mb-1">{shortDate(point.date)}</p>
+          <p className="font-bold mb-1">{point.label}</p>
           <p className="mb-1">{num(point.total)} events</p>
           {breakdown.map(([type, count]) => (
             <p key={type} className="flex justify-between gap-4 text-white/75">
@@ -424,6 +450,7 @@ function TrafficChart({ series }) {
   );
 }
 
+/** A "Top ..." panel with visible rank numbers, so ties past #1 are still legible. */
 function TopList({ config, items }) {
   const { title, unit, icon, map } = config;
   const rows = (items || []).map(map);
@@ -435,14 +462,20 @@ function TopList({ config, items }) {
       ) : (
         <div className="space-y-4">
           {rows.map((r, idx) => (
-            <BarRow
-              key={r.id || idx}
-              label={r.name || "Untitled"}
-              sub={r.sub}
-              value={`${num(r.count)} ${unit}`}
-              percent={(r.count / max) * 100}
-              barClass="bg-[#2D2380]"
-            />
+            <div key={r.id || idx} className="flex items-start gap-3">
+              <span className="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-[#EEEDFE] text-[#2D2380] text-[10px] font-bold flex items-center justify-center">
+                {idx + 1}
+              </span>
+              <div className="flex-1 min-w-0">
+                <BarRow
+                  label={r.name || "Untitled"}
+                  sub={r.sub}
+                  value={`${num(r.count)} ${unit}`}
+                  percent={(r.count / max) * 100}
+                  barClass="bg-[#2D2380]"
+                />
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -456,7 +489,7 @@ function EventLog({ events, colorByType, now }) {
       <div className="px-6 py-5 border-b border-[#E0DEF5]">
         <h2 className="text-[20px] font-semibold text-[#1A1340]">Latest Events</h2>
         <p className="text-[#7775A0] text-[13px] mt-0.5">
-          The 15 most recent interactions recorded on your sites.
+          The 15 most recent interactions recorded in the selected period.
         </p>
       </div>
       <div className="overflow-x-auto">
@@ -519,13 +552,16 @@ function EventLog({ events, colorByType, now }) {
 
 // ─── 4. The dashboard layout ─────────────────────────────────────────────────
 
-function AnalyticsView({ data, range, setRange, loading, error, reload }) {
+function AnalyticsView({ data, range, setRange, limit, setLimit, loading, error, reload }) {
   const now = useNow();
   const { meta, kpis } = data;
-  const days = meta?.days ?? RANGES.find((r) => r.value === range)?.days ?? 30;
   const compareNote = meta?.comparesToPrevious
-    ? `vs previous ${days} days`
+    ? meta.compareLabel
     : "no earlier period to compare";
+  const chartEmptyText =
+    meta?.mode === "day"
+      ? `No events recorded ${meta.label.toLowerCase()} yet.`
+      : "No events recorded for this period.";
 
   const colorByType = Object.fromEntries(
     data.eventBreakdown.map((e) => [e.label, e.color]),
@@ -556,10 +592,14 @@ function AnalyticsView({ data, range, setRange, loading, error, reload }) {
               Interactions across coupons, stores, products and blogs. Data is kept{" "}
               {meta?.retentionDays ?? 90} days; times are in {meta?.timezone || "UTC"}.
             </p>
+            <p className="text-[#4A3DBF] text-[13px] font-semibold mt-1 flex items-center gap-1.5">
+              <CalendarClock size={14} />
+              Showing {meta?.label} · {formatWindow(meta)}
+            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex bg-white border-[1.5px] border-[#E0DEF5] rounded-lg p-1" role="group" aria-label="Date range">
+            <div className="flex flex-wrap bg-white border-[1.5px] border-[#E0DEF5] rounded-lg p-1" role="group" aria-label="Date range">
               {RANGES.map((r) => (
                 <button
                   key={r.value}
@@ -574,6 +614,24 @@ function AnalyticsView({ data, range, setRange, loading, error, reload }) {
                 </button>
               ))}
             </div>
+
+            <label className="flex items-center gap-2 bg-white border-[1.5px] border-[#E0DEF5] rounded-lg px-3 py-1.5">
+              <span className="text-[12px] font-semibold text-[#7775A0] whitespace-nowrap">
+                Show top
+              </span>
+              <select
+                value={limit}
+                onChange={(e) => setLimit(Number(e.target.value))}
+                className="bg-transparent text-[#1A1340] text-[13px] font-bold focus:outline-none cursor-pointer"
+              >
+                {LIMIT_OPTIONS.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </label>
+
             <button
               type="button"
               onClick={reload}
@@ -612,9 +670,9 @@ function AnalyticsView({ data, range, setRange, loading, error, reload }) {
           ))}
         </div>
 
-        {/* Daily trend */}
-        <Panel title="Events per Day" icon={Activity}>
-          <TrafficChart series={data.timeSeries || []} />
+        {/* Trend chart — hourly for Today/Yesterday, daily for rolling ranges */}
+        <Panel title={meta?.granularity === "hour" ? "Events by Hour" : "Events per Day"} icon={Activity}>
+          <TrafficChart series={data.timeSeries || []} emptyText={chartEmptyText} />
         </Panel>
 
         {/* Breakdowns */}
@@ -710,10 +768,11 @@ function AnalyticsView({ data, range, setRange, loading, error, reload }) {
 // ─── 5. Page (data + states) ─────────────────────────────────────────────────
 
 export default function AnalyticsPage() {
-  const [range, setRange] = useState("30d");
-  const { data, loading, error, reload } = useAnalytics(range);
+  const [range, setRange] = useState("today");
+  const [limit, setLimit] = useState(10);
+  const { data, loading, error, reload } = useAnalytics(range, limit);
 
-  // First load only. Later range changes keep the old data visible (dimmed).
+  // First load only. Later range/limit changes keep the old data visible (dimmed).
   if (!data && loading) {
     return (
       <div className="min-h-screen bg-[#F7F6FF] flex flex-col items-center justify-center">
@@ -749,6 +808,8 @@ export default function AnalyticsPage() {
       data={data}
       range={range}
       setRange={setRange}
+      limit={limit}
+      setLimit={setLimit}
       loading={loading}
       error={error}
       reload={reload}
