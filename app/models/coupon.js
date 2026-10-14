@@ -331,7 +331,10 @@ CouponSchema.pre("validate", function () {
 
   // Validate trackingLink URL format
   if (this.trackingLink && !isValidUrl(this.trackingLink)) {
-    this.invalidate("trackingLink", "trackingLink must be a valid http/https URL.");
+    this.invalidate(
+      "trackingLink",
+      "trackingLink must be a valid http/https URL.",
+    );
   }
 
   // Free shipping coupons always have a discount value of 0 (no numeric discount)
@@ -360,7 +363,12 @@ CouponSchema.pre("validate", function () {
   }
 
   // Set verifiedAt when isVerified is first set to true
-  if (this.isModified && this.isModified("isVerified") && this.isVerified && !this.verifiedAt) {
+  if (
+    this.isModified &&
+    this.isModified("isVerified") &&
+    this.isVerified &&
+    !this.verifiedAt
+  ) {
     this.verifiedAt = new Date();
   }
 });
@@ -391,7 +399,21 @@ CouponSchema.index({
   isPinned: -1,
   sortOrder: 1,
 });
-
+CouponSchema.index(
+  {
+    title: "text",
+    subtitle: "text",
+    code: "text",
+  },
+  {
+    name: "coupon_public_search_text",
+    weights: {
+      title: 10,
+      code: 8,
+      subtitle: 3,
+    },
+  },
+);
 // Exclusive deals widget / badge filtering
 CouponSchema.index({ isExclusive: 1, status: 1 });
 

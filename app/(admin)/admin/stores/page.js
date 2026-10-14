@@ -1,8 +1,18 @@
-/* /app/(admin)/admin/stores/page.js */
+
+/* app/(admin)/admin/stores/page.js */
+
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
 import Link from "next/link";
+
 import {
   Store,
   Search,
@@ -21,7 +31,15 @@ import {
   AlertCircle,
 } from "lucide-react";
 
+// ============================================================
+// CONFIGURATION
+// ============================================================
+
 const LIMIT = 10;
+
+// ============================================================
+// API HELPERS
+// ============================================================
 
 const safeJson = async (response) => {
   try {
@@ -33,13 +51,21 @@ const safeJson = async (response) => {
 
 const readPath = (object, path) => {
   return path.split(".").reduce((acc, key) => {
-    if (!acc || typeof acc !== "object") return undefined;
+    if (!acc || typeof acc !== "object") {
+      return undefined;
+    }
+
     return acc[key];
   }, object);
 };
 
-const extractArrayFromPayload = (payload, preferredPaths = []) => {
-  if (Array.isArray(payload)) return payload;
+const extractArrayFromPayload = (
+  payload,
+  preferredPaths = []
+) => {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
 
   for (const path of preferredPaths) {
     const value = readPath(payload, path);
@@ -55,7 +81,11 @@ const extractArrayFromPayload = (payload, preferredPaths = []) => {
   while (queue.length > 0) {
     const current = queue.shift();
 
-    if (!current || typeof current !== "object" || visited.has(current)) {
+    if (
+      !current ||
+      typeof current !== "object" ||
+      visited.has(current)
+    ) {
       continue;
     }
 
@@ -75,19 +105,37 @@ const extractArrayFromPayload = (payload, preferredPaths = []) => {
   return [];
 };
 
+// ============================================================
+// NORMALIZATION HELPERS
+// ============================================================
+
 const getRefId = (item) => {
-  return String(item?._id || item?.id || item?.value || item?.key || "");
+  return String(
+    item?._id ||
+      item?.id ||
+      item?.value ||
+      item?.key ||
+      ""
+  );
 };
 
-const normalizeReferenceItem = (item, fallbackName = "Unnamed") => {
-  if (!item || typeof item !== "object") return null;
+const normalizeReferenceItem = (
+  item,
+  fallbackName = "Unnamed"
+) => {
+  if (!item || typeof item !== "object") {
+    return null;
+  }
 
   const id = getRefId(item);
 
-  if (!id) return null;
+  if (!id) {
+    return null;
+  }
 
   return {
     _id: id,
+
     name:
       item.name ||
       item.title ||
@@ -95,20 +143,29 @@ const normalizeReferenceItem = (item, fallbackName = "Unnamed") => {
       item.displayName ||
       item.code ||
       fallbackName,
+
     slug: item.slug || "",
     code: item.code || "",
     status: item.status || "",
   };
 };
 
-const normalizeReferenceList = (payload, paths, fallbackName) => {
+const normalizeReferenceList = (
+  payload,
+  paths,
+  fallbackName
+) => {
   return extractArrayFromPayload(payload, paths)
-    .map((item) => normalizeReferenceItem(item, fallbackName))
+    .map((item) =>
+      normalizeReferenceItem(item, fallbackName)
+    )
     .filter(Boolean);
 };
 
 const safeHostname = (url) => {
-  if (!url) return "";
+  if (!url) {
+    return "";
+  }
 
   try {
     return new URL(url).hostname.replace(/^www\./, "");
@@ -118,13 +175,19 @@ const safeHostname = (url) => {
 };
 
 const formatCountryName = (country) => {
-  if (!country) return "Unknown Country";
+  if (!country) {
+    return "Unknown Country";
+  }
 
   if (country.name && country.code) {
     return `${country.name} (${country.code})`;
   }
 
-  return country.name || country.code || "Unknown Country";
+  return (
+    country.name ||
+    country.code ||
+    "Unknown Country"
+  );
 };
 
 const getPrimaryCategoryName = (store) => {
@@ -146,7 +209,10 @@ const getNetworkName = (store) => {
 };
 
 const getCountryLabel = (store) => {
-  const code = store?.countryId?.code || store?.countryCode || "GLOBAL";
+  const code =
+    store?.countryId?.code ||
+    store?.countryCode ||
+    "GLOBAL";
 
   if (!code || code === "GLOBAL") {
     return "Global";
@@ -159,49 +225,129 @@ const getLogoUrl = (store) => {
   return store?.images?.logo?.url || "";
 };
 
+// ============================================================
+// MAIN PAGE
+// ============================================================
+
 const StoresPage = () => {
+  // ----------------------------------------------------------
+  // DATA
+  // ----------------------------------------------------------
+
   const [stores, setStores] = useState([]);
   const [categories, setCategories] = useState([]);
   const [countries, setCountries] = useState([]);
   const [networks, setNetworks] = useState([]);
 
+  // ----------------------------------------------------------
+  // PAGINATION
+  // ----------------------------------------------------------
+
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
+  // ----------------------------------------------------------
+  // SEARCH
+  // ----------------------------------------------------------
+
   const [searchDraft, setSearchDraft] = useState("");
   const [search, setSearch] = useState("");
+
+  // ----------------------------------------------------------
+  // FILTERS
+  // ----------------------------------------------------------
 
   const [categoryId, setCategoryId] = useState("");
   const [countryId, setCountryId] = useState("");
   const [networkId, setNetworkId] = useState("");
-  const [activeFilter, setActiveFilter] = useState("all");
-  const [featuredFilter, setFeaturedFilter] = useState("all");
 
-  const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const [activeFilter, setActiveFilter] =
+    useState("all");
+
+  const [featuredFilter, setFeaturedFilter] =
+    useState("all");
+
+  const [showMoreFilters, setShowMoreFilters] =
+    useState(false);
+
+  // ----------------------------------------------------------
+  // LOADING
+  // ----------------------------------------------------------
 
   const [isLoading, setIsLoading] = useState(true);
-  const [isReferenceLoading, setIsReferenceLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [deletingId, setDeletingId] = useState("");
+
+  const [
+    isReferenceLoading,
+    setIsReferenceLoading,
+  ] = useState(true);
+
+  const [isRefreshing, setIsRefreshing] =
+    useState(false);
+
+  const [deletingId, setDeletingId] =
+    useState("");
+
+  // ----------------------------------------------------------
+  // MESSAGES
+  // ----------------------------------------------------------
 
   const [notice, setNotice] = useState(null);
-  const [referenceError, setReferenceError] = useState("");
+
+  const [referenceError, setReferenceError] =
+    useState("");
+
+  // ----------------------------------------------------------
+  // REQUEST CONTROL
+  // ----------------------------------------------------------
+
+  // Prevent stores.length from becoming a fetch dependency.
+  const storesLengthRef = useRef(0);
+
+  // Prevent stale API responses from replacing newer data.
+  const requestIdRef = useRef(0);
+
+  // Explicit refresh trigger.
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // ----------------------------------------------------------
+  // COMPUTED VALUES
+  // ----------------------------------------------------------
 
   const hasActiveFilters = useMemo(() => {
     return Boolean(
       search ||
-      categoryId ||
-      countryId ||
-      networkId ||
-      activeFilter !== "all" ||
-      featuredFilter !== "all",
+        categoryId ||
+        countryId ||
+        networkId ||
+        activeFilter !== "all" ||
+        featuredFilter !== "all"
     );
-  }, [search, categoryId, countryId, networkId, activeFilter, featuredFilter]);
+  }, [
+    search,
+    categoryId,
+    countryId,
+    networkId,
+    activeFilter,
+    featuredFilter,
+  ]);
 
-  const startItem = total === 0 ? 0 : (page - 1) * LIMIT + 1;
+  const startItem =
+    total === 0
+      ? 0
+      : (page - 1) * LIMIT + 1;
+
   const endItem =
-    total === 0 ? 0 : Math.min(total, startItem + stores.length - 1);
+    total === 0
+      ? 0
+      : Math.min(
+          total,
+          startItem + stores.length - 1
+        );
+
+  // ==========================================================
+  // FETCH REFERENCE DATA
+  // ==========================================================
 
   const fetchReferenceData = useCallback(async () => {
     setIsReferenceLoading(true);
@@ -210,6 +356,7 @@ const StoresPage = () => {
     const fetchReference = async (url) => {
       const response = await fetch(url, {
         method: "GET",
+        credentials: "same-origin",
         cache: "no-store",
       });
 
@@ -217,105 +364,157 @@ const StoresPage = () => {
 
       if (!response.ok) {
         throw new Error(
-          payload?.error || payload?.message || `Failed to fetch ${url}`,
+          payload?.error ||
+            payload?.message ||
+            `Failed to fetch ${url}`
         );
       }
 
       return payload;
     };
 
-    const [categoryResult, countryResult, networkResult] =
-      await Promise.allSettled([
-        fetchReference("/api/admin/categories?limit=100"),
-        fetchReference("/api/admin/countries?limit=250"),
-        fetchReference("/api/admin/affiliate-networks?limit=100"),
-      ]);
+    const [
+      categoryResult,
+      countryResult,
+      networkResult,
+    ] = await Promise.allSettled([
+      fetchReference(
+        "/api/admin/categories?limit=100"
+      ),
+
+      fetchReference(
+        "/api/admin/countries?limit=250"
+      ),
+
+      fetchReference(
+        "/api/admin/affiliate-networks?limit=100"
+      ),
+    ]);
 
     const failed = [];
 
+    // --------------------------------------------------------
+    // CATEGORIES
+    // --------------------------------------------------------
+
     if (categoryResult.status === "fulfilled") {
-      const normalizedCategories = normalizeReferenceList(
-        categoryResult.value,
-        [
-          "categories",
-          "categoryList",
-          "data.categories",
-          "data.categoryList",
-          "data.items",
-          "data.results",
-          "items",
-          "results",
-          "docs",
-        ],
-        "Unnamed Category",
-      );
+      const normalizedCategories =
+        normalizeReferenceList(
+          categoryResult.value,
+          [
+            "categories",
+            "categoryList",
+            "data.categories",
+            "data.categoryList",
+            "data.items",
+            "data.results",
+            "items",
+            "results",
+            "docs",
+          ],
+          "Unnamed Category"
+        );
 
       setCategories(normalizedCategories);
     } else {
-      console.error("Categories fetch failed:", categoryResult.reason);
+      console.error(
+        "Categories fetch failed:",
+        categoryResult.reason
+      );
+
       failed.push("categories");
     }
 
+    // --------------------------------------------------------
+    // COUNTRIES
+    // --------------------------------------------------------
+
     if (countryResult.status === "fulfilled") {
-      const normalizedCountries = normalizeReferenceList(
-        countryResult.value,
-        [
-          "countries",
-          "countryList",
-          "data.countries",
-          "data.countryList",
-          "data.items",
-          "data.results",
-          "items",
-          "results",
-          "docs",
-        ],
-        "Unnamed Country",
-      );
+      const normalizedCountries =
+        normalizeReferenceList(
+          countryResult.value,
+          [
+            "countries",
+            "countryList",
+            "data.countries",
+            "data.countryList",
+            "data.items",
+            "data.results",
+            "items",
+            "results",
+            "docs",
+          ],
+          "Unnamed Country"
+        );
 
       setCountries(normalizedCountries);
     } else {
-      console.error("Countries fetch failed:", countryResult.reason);
+      console.error(
+        "Countries fetch failed:",
+        countryResult.reason
+      );
+
       failed.push("countries");
     }
 
+    // --------------------------------------------------------
+    // AFFILIATE NETWORKS
+    // --------------------------------------------------------
+
     if (networkResult.status === "fulfilled") {
-      const normalizedNetworks = normalizeReferenceList(
-        networkResult.value,
-        [
-          "networks",
-          "affiliateNetworks",
-          "affiliateNetworkList",
-          "data.networks",
-          "data.affiliateNetworks",
-          "data.affiliateNetworkList",
-          "data.items",
-          "data.results",
-          "items",
-          "results",
-          "docs",
-        ],
-        "Unnamed Network",
-      );
+      const normalizedNetworks =
+        normalizeReferenceList(
+          networkResult.value,
+          [
+            "networks",
+            "affiliateNetworks",
+            "affiliateNetworkList",
+            "data.networks",
+            "data.affiliateNetworks",
+            "data.affiliateNetworkList",
+            "data.items",
+            "data.results",
+            "items",
+            "results",
+            "docs",
+          ],
+          "Unnamed Network"
+        );
 
       setNetworks(normalizedNetworks);
     } else {
-      console.error("Affiliate networks fetch failed:", networkResult.reason);
+      console.error(
+        "Affiliate networks fetch failed:",
+        networkResult.reason
+      );
+
       failed.push("affiliate networks");
     }
 
     if (failed.length > 0) {
-      setReferenceError(`Could not load ${failed.join(", ")}.`);
+      setReferenceError(
+        `Could not load ${failed.join(", ")}.`
+      );
     }
 
     setIsReferenceLoading(false);
   }, []);
 
-  const fetchStores = useCallback(
-    async (signal) => {
-      setNotice(null);
+  // ==========================================================
+  // FETCH STORES
+  // ==========================================================
 
-      if (stores.length === 0) {
+  const fetchStores = useCallback(
+    async (signal, options = {}) => {
+      const { preserveNotice = false } = options;
+
+      const requestId = ++requestIdRef.current;
+
+      if (!preserveNotice) {
+        setNotice(null);
+      }
+
+      if (storesLengthRef.current === 0) {
         setIsLoading(true);
       } else {
         setIsRefreshing(true);
@@ -332,7 +531,10 @@ const StoresPage = () => {
         }
 
         if (categoryId) {
-          params.set("primaryCategoryId", categoryId);
+          params.set(
+            "primaryCategoryId",
+            categoryId
+          );
         }
 
         if (countryId) {
@@ -340,40 +542,58 @@ const StoresPage = () => {
         }
 
         if (networkId) {
-          params.set("affiliateNetworkId", networkId);
+          params.set(
+            "affiliateNetworkId",
+            networkId
+          );
         }
 
         if (activeFilter !== "all") {
-          params.set("isActive", activeFilter);
+          params.set(
+            "isActive",
+            activeFilter
+          );
         }
 
         if (featuredFilter !== "all") {
-          params.set("isFeatured", featuredFilter);
+          params.set(
+            "isFeatured",
+            featuredFilter
+          );
         }
 
-        const response = await fetch(`/api/admin/stores?${params.toString()}`, {
-          method: "GET",
-          cache: "no-store",
-          signal,
-        });
+        const response = await fetch(
+          `/api/admin/stores?${params.toString()}`,
+          {
+            method: "GET",
+            credentials: "same-origin",
+            cache: "no-store",
+            signal,
+          }
+        );
 
         const payload = await safeJson(response);
 
         if (!response.ok) {
           throw new Error(
-            payload?.error || payload?.message || "Failed to fetch stores.",
+            payload?.error ||
+              payload?.message ||
+              "Failed to fetch stores."
           );
         }
 
-        const list = extractArrayFromPayload(payload, [
-          "stores",
-          "data.stores",
-          "data.items",
-          "data.results",
-          "items",
-          "results",
-          "docs",
-        ])
+        const list = extractArrayFromPayload(
+          payload,
+          [
+            "stores",
+            "data.stores",
+            "data.items",
+            "data.results",
+            "items",
+            "results",
+            "docs",
+          ]
+        )
           .map((store) => ({
             ...store,
             _id: getRefId(store),
@@ -391,7 +611,7 @@ const StoresPage = () => {
             payload.total ??
             payload.totalCount ??
             payload.count ??
-            list.length,
+            list.length
         );
 
         const nextTotalPages = Number(
@@ -399,33 +619,80 @@ const StoresPage = () => {
             payload.totalPages ??
             Math.max(
               1,
-              Math.ceil((Number.isFinite(nextTotal) ? nextTotal : 0) / LIMIT),
-            ),
+              Math.ceil(
+                (Number.isFinite(nextTotal)
+                  ? nextTotal
+                  : 0) / LIMIT
+              )
+            )
         );
+
+        // Ignore responses from older requests.
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
+
+        if (signal?.aborted) {
+          return;
+        }
 
         setStores(list);
-        setTotal(Number.isFinite(nextTotal) ? nextTotal : list.length);
-        setTotalPages(
-          Number.isFinite(nextTotalPages) && nextTotalPages > 0
-            ? nextTotalPages
-            : 1,
-        );
-      } catch (error) {
-        if (error?.name === "AbortError") return;
 
-        console.error("Stores fetch failed:", error);
+        storesLengthRef.current = list.length;
+
+        setTotal(
+          Number.isFinite(nextTotal)
+            ? nextTotal
+            : list.length
+        );
+
+        setTotalPages(
+          Number.isFinite(nextTotalPages) &&
+            nextTotalPages > 0
+            ? nextTotalPages
+            : 1
+        );
+
+        // Handle page becoming invalid after deletions.
+        if (
+          page > 1 &&
+          Number.isFinite(nextTotalPages) &&
+          nextTotalPages > 0 &&
+          page > nextTotalPages
+        ) {
+          setPage(nextTotalPages);
+        }
+      } catch (error) {
+        if (error?.name === "AbortError") {
+          return;
+        }
+
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
+
+        console.error(
+          "Stores fetch failed:",
+          error
+        );
 
         setNotice({
           type: "error",
-          message: error.message || "Failed to fetch stores.",
+          message:
+            error.message ||
+            "Failed to fetch stores.",
         });
 
         setStores([]);
+        storesLengthRef.current = 0;
+
         setTotal(0);
         setTotalPages(1);
       } finally {
-        setIsLoading(false);
-        setIsRefreshing(false);
+        if (requestId === requestIdRef.current) {
+          setIsLoading(false);
+          setIsRefreshing(false);
+        }
       }
     },
     [
@@ -436,21 +703,34 @@ const StoresPage = () => {
       networkId,
       activeFilter,
       featuredFilter,
-      stores.length,
-    ],
+    ]
   );
+
+  // ==========================================================
+  // INITIAL REFERENCE LOADING
+  // ==========================================================
 
   useEffect(() => {
     fetchReferenceData();
   }, [fetchReferenceData]);
+
+  // ==========================================================
+  // DEBOUNCED SEARCH
+  // ==========================================================
 
   useEffect(() => {
     const timeout = setTimeout(() => {
       setSearch(searchDraft.trim());
     }, 350);
 
-    return () => clearTimeout(timeout);
+    return () => {
+      clearTimeout(timeout);
+    };
   }, [searchDraft]);
+
+  // ==========================================================
+  // STORES LOADING
+  // ==========================================================
 
   useEffect(() => {
     const controller = new AbortController();
@@ -460,67 +740,128 @@ const StoresPage = () => {
     return () => {
       controller.abort();
     };
-  }, [fetchStores]);
+  }, [fetchStores, refreshKey]);
+
+  // ==========================================================
+  // RESET FILTERS
+  // ==========================================================
 
   const resetFilters = () => {
     setSearchDraft("");
     setSearch("");
+
     setCategoryId("");
     setCountryId("");
     setNetworkId("");
+
     setActiveFilter("all");
     setFeaturedFilter("all");
+
     setPage(1);
   };
+
+  // ==========================================================
+  // REFRESH STORES
+  // ==========================================================
+
+  const refreshStores = () => {
+    setRefreshKey((prev) => prev + 1);
+  };
+
+  // ==========================================================
+  // DELETE STORE
+  // ==========================================================
 
   const handleDelete = async (store) => {
     const storeId = getRefId(store);
 
-    if (!storeId) return;
+    if (!storeId || deletingId) {
+      return;
+    }
 
     const confirmed = window.confirm(
-      `Are you sure you want to delete "${store.name}"? If this store has coupons, the API may block deletion.`,
+      `Are you sure you want to delete "${store.name}"? If this store has coupons, the API may block deletion.`
     );
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
 
     setDeletingId(storeId);
     setNotice(null);
 
     try {
-      const response = await fetch(`/api/admin/stores/${storeId}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/admin/stores/${encodeURIComponent(
+          storeId
+        )}`,
+        {
+          method: "DELETE",
+          credentials: "same-origin",
+          cache: "no-store",
+        }
+      );
 
       const payload = await safeJson(response);
 
       if (!response.ok) {
         throw new Error(
-          payload?.error || payload?.message || "Failed to delete store.",
+          payload?.error ||
+            payload?.message ||
+            "Failed to delete store."
         );
       }
 
+      // Show success before reloading.
       setNotice({
         type: "success",
-        message: payload?.message || "Store deleted successfully.",
+        message:
+          payload?.message ||
+          "Store deleted successfully.",
       });
 
+      // Immediately remove deleted store from current UI.
+      setStores((prev) => {
+        const next = prev.filter(
+          (item) => getRefId(item) !== storeId
+        );
+
+        storesLengthRef.current = next.length;
+
+        return next;
+      });
+
+      setTotal((prev) => Math.max(0, prev - 1));
+
       if (stores.length === 1 && page > 1) {
+        // Pagination change triggers automatic refetch.
         setPage((prev) => Math.max(1, prev - 1));
       } else {
-        await fetchStores();
+        // Refresh without clearing success notification.
+        await fetchStores(undefined, {
+          preserveNotice: true,
+        });
       }
     } catch (error) {
-      console.error("Store delete failed:", error);
+      console.error(
+        "Store delete failed:",
+        error
+      );
 
       setNotice({
         type: "error",
-        message: error.message || "Failed to delete store.",
+        message:
+          error.message ||
+          "Failed to delete store.",
       });
     } finally {
       setDeletingId("");
     }
   };
+
+  // ==========================================================
+  // STATUS BADGE
+  // ==========================================================
 
   const getStatusBadge = (isActive) => {
     if (isActive) {
@@ -538,19 +879,32 @@ const StoresPage = () => {
     );
   };
 
+  // ==========================================================
+  // PAGE UI
+  // ==========================================================
+
   return (
     <div className="min-h-screen bg-[#F7F6FF] p-6 md:p-8">
       <div className="max-w-[1280px] mx-auto space-y-6">
-        {/* ─── PAGE HEADER ─── */}
+
+        {/* ====================================================
+            PAGE HEADER
+        ==================================================== */}
+
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-[32px] font-bold text-[#1A1340] leading-tight flex items-center gap-3">
-              <Store className="text-[#F4A836]" size={32} strokeWidth={2.5} />
+              <Store
+                className="text-[#F4A836]"
+                size={32}
+                strokeWidth={2.5}
+              />
               Brands & Stores
             </h1>
+
             <p className="text-[#7775A0] text-[16px] mt-1">
-              Manage retail partners, affiliate tracking setups, and brand SEO
-              pages.
+              Manage retail partners, affiliate tracking
+              setups, and brand SEO pages.
             </p>
           </div>
 
@@ -563,34 +917,53 @@ const StoresPage = () => {
           </Link>
         </div>
 
+        {/* ====================================================
+            NOTIFICATIONS
+        ==================================================== */}
+
         {notice && (
           <div
+            role="alert"
             className={`flex items-start gap-3 rounded-xl border p-4 text-[14px] font-medium ${
               notice.type === "success"
                 ? "bg-[#22B07D]/10 border-[#22B07D]/25 text-[#167A57]"
                 : "bg-[#E24B4A]/10 border-[#E24B4A]/25 text-[#B63837]"
             }`}
           >
-            <AlertCircle size={18} className="mt-0.5 shrink-0" />
+            <AlertCircle
+              size={18}
+              className="mt-0.5 shrink-0"
+            />
+
             <span>{notice.message}</span>
           </div>
         )}
 
         {referenceError && (
           <div className="flex items-start gap-3 rounded-xl border border-[#F4A836]/30 bg-[#F4A836]/10 p-4 text-[14px] font-medium text-[#BA7517]">
-            <AlertCircle size={18} className="mt-0.5 shrink-0" />
+            <AlertCircle
+              size={18}
+              className="mt-0.5 shrink-0"
+            />
+
             <span>{referenceError}</span>
           </div>
         )}
 
-        {/* ─── TOOLBAR (Search & Filters) ─── */}
+        {/* ====================================================
+            SEARCH & FILTER TOOLBAR
+        ==================================================== */}
+
         <div className="bg-white border border-[#E0DEF5] rounded-xl p-4 shadow-[0_2px_12px_rgba(26,19,64,0.04)] flex flex-col md:flex-row items-center gap-4">
+
           {/* Search */}
+
           <div className="relative w-full md:w-[400px]">
             <Search
               size={18}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7775A0]"
             />
+
             <input
               type="text"
               placeholder="Search stores by name or domain..."
@@ -603,27 +976,37 @@ const StoresPage = () => {
             />
           </div>
 
-          {/* Filters */}
+          {/* Primary filters */}
+
           <div className="flex items-center gap-3 w-full md:w-auto ml-auto overflow-x-auto [&::-webkit-scrollbar]:hidden">
+
+            {/* Category */}
+
             <select
               value={categoryId}
               onChange={(e) => {
                 setCategoryId(e.target.value);
                 setPage(1);
               }}
-              className="bg-[#FFFFFF] border-[1.5px] border-[#E0DEF5] text-[#1A1340] text-[14px] font-medium py-2.5 px-4 rounded-lg focus:outline-none focus:border-[#2D2380]"
+              className="bg-white border-[1.5px] border-[#E0DEF5] text-[#1A1340] text-[14px] font-medium py-2.5 px-4 rounded-lg focus:outline-none focus:border-[#2D2380]"
             >
               <option value="">
                 {isReferenceLoading
                   ? "Loading Categories..."
                   : "All Categories"}
               </option>
+
               {categories.map((category) => (
-                <option key={category._id} value={category._id}>
+                <option
+                  key={category._id}
+                  value={category._id}
+                >
                   {category.name}
                 </option>
               ))}
             </select>
+
+            {/* Country */}
 
             <select
               value={countryId}
@@ -631,23 +1014,32 @@ const StoresPage = () => {
                 setCountryId(e.target.value);
                 setPage(1);
               }}
-              className="bg-[#FFFFFF] border-[1.5px] border-[#E0DEF5] text-[#1A1340] text-[14px] font-medium py-2.5 px-4 rounded-lg focus:outline-none focus:border-[#2D2380]"
+              className="bg-white border-[1.5px] border-[#E0DEF5] text-[#1A1340] text-[14px] font-medium py-2.5 px-4 rounded-lg focus:outline-none focus:border-[#2D2380]"
             >
               <option value="">
                 {isReferenceLoading
                   ? "Loading Countries..."
                   : "Global & All Countries"}
               </option>
+
               {countries.map((country) => (
-                <option key={country._id} value={country._id}>
+                <option
+                  key={country._id}
+                  value={country._id}
+                >
                   {formatCountryName(country)}
                 </option>
               ))}
             </select>
 
+            {/* More filters toggle */}
+
             <button
               type="button"
-              onClick={() => setShowMoreFilters((prev) => !prev)}
+              onClick={() =>
+                setShowMoreFilters((prev) => !prev)
+              }
+              aria-expanded={showMoreFilters}
               className="flex items-center gap-2 bg-[#F7F6FF] border-[1.5px] border-[#E0DEF5] text-[#7775A0] hover:text-[#2D2380] hover:border-[#4A3DBF] px-4 py-2.5 rounded-lg font-semibold text-[14px] transition-colors shrink-0"
             >
               <Filter size={18} />
@@ -656,20 +1048,37 @@ const StoresPage = () => {
           </div>
         </div>
 
+        {/* ====================================================
+            ADDITIONAL FILTERS
+        ==================================================== */}
+
         {showMoreFilters && (
-          <div className="bg-white border border-[#E0DEF5] rounded-xl p-4 shadow-[0_2px_12px_rgba(26,19,64,0.04)] flex flex-col md:flex-row items-center gap-3">
+          <div className="bg-white border border-[#E0DEF5] rounded-xl p-4 shadow-[0_2px_12px_rgba(26,19,64,0.04)] flex flex-col md:flex-row md:items-center gap-3">
+
+            {/* Active status */}
+
             <select
               value={activeFilter}
               onChange={(e) => {
                 setActiveFilter(e.target.value);
                 setPage(1);
               }}
-              className="w-full md:w-auto bg-[#FFFFFF] border-[1.5px] border-[#E0DEF5] text-[#1A1340] text-[14px] font-medium py-2.5 px-4 rounded-lg focus:outline-none focus:border-[#2D2380]"
+              className="w-full md:w-auto bg-white border-[1.5px] border-[#E0DEF5] text-[#1A1340] text-[14px] font-medium py-2.5 px-4 rounded-lg focus:outline-none focus:border-[#2D2380]"
             >
-              <option value="all">All Status</option>
-              <option value="true">Active Only</option>
-              <option value="false">Inactive Only</option>
+              <option value="all">
+                All Status
+              </option>
+
+              <option value="true">
+                Active Only
+              </option>
+
+              <option value="false">
+                Inactive Only
+              </option>
             </select>
+
+            {/* Featured status */}
 
             <select
               value={featuredFilter}
@@ -677,12 +1086,22 @@ const StoresPage = () => {
                 setFeaturedFilter(e.target.value);
                 setPage(1);
               }}
-              className="w-full md:w-auto bg-[#FFFFFF] border-[1.5px] border-[#E0DEF5] text-[#1A1340] text-[14px] font-medium py-2.5 px-4 rounded-lg focus:outline-none focus:border-[#2D2380]"
+              className="w-full md:w-auto bg-white border-[1.5px] border-[#E0DEF5] text-[#1A1340] text-[14px] font-medium py-2.5 px-4 rounded-lg focus:outline-none focus:border-[#2D2380]"
             >
-              <option value="all">All Featured</option>
-              <option value="true">Featured Only</option>
-              <option value="false">Not Featured</option>
+              <option value="all">
+                All Featured
+              </option>
+
+              <option value="true">
+                Featured Only
+              </option>
+
+              <option value="false">
+                Not Featured
+              </option>
             </select>
+
+            {/* Affiliate network */}
 
             <select
               value={networkId}
@@ -690,17 +1109,25 @@ const StoresPage = () => {
                 setNetworkId(e.target.value);
                 setPage(1);
               }}
-              className="w-full md:w-auto bg-[#FFFFFF] border-[1.5px] border-[#E0DEF5] text-[#1A1340] text-[14px] font-medium py-2.5 px-4 rounded-lg focus:outline-none focus:border-[#2D2380]"
+              className="w-full md:w-auto bg-white border-[1.5px] border-[#E0DEF5] text-[#1A1340] text-[14px] font-medium py-2.5 px-4 rounded-lg focus:outline-none focus:border-[#2D2380]"
             >
               <option value="">
-                {isReferenceLoading ? "Loading Networks..." : "All Networks"}
+                {isReferenceLoading
+                  ? "Loading Networks..."
+                  : "All Networks"}
               </option>
+
               {networks.map((network) => (
-                <option key={network._id} value={network._id}>
+                <option
+                  key={network._id}
+                  value={network._id}
+                >
                   {network.name}
                 </option>
               ))}
             </select>
+
+            {/* Reset */}
 
             <button
               type="button"
@@ -718,36 +1145,69 @@ const StoresPage = () => {
           </div>
         )}
 
-        {/* ─── DATA TABLE ─── */}
+        {/* ====================================================
+            STORES DATA TABLE
+        ==================================================== */}
+
         <div className="bg-white border border-[#E0DEF5] rounded-xl shadow-[0_2px_12px_rgba(26,19,64,0.04)] overflow-hidden">
+
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[1000px]">
+
+              {/* Table header */}
+
               <thead>
                 <tr className="bg-[#F7F6FF] text-[#7775A0] text-[12px] uppercase tracking-wider font-semibold border-b border-[#E0DEF5]">
-                  <th className="px-6 py-4 w-[35%]">Brand / Store</th>
-                  <th className="px-6 py-4">Taxonomy</th>
-                  <th className="px-6 py-4">Geo & Network</th>
-                  <th className="px-6 py-4">Status & Stats</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
+                  <th className="px-6 py-4 w-[35%]">
+                    Brand / Store
+                  </th>
+
+                  <th className="px-6 py-4">
+                    Taxonomy
+                  </th>
+
+                  <th className="px-6 py-4">
+                    Geo & Network
+                  </th>
+
+                  <th className="px-6 py-4">
+                    Status & Stats
+                  </th>
+
+                  <th className="px-6 py-4 text-right">
+                    Actions
+                  </th>
                 </tr>
               </thead>
+
+              {/* Table body */}
 
               <tbody className="divide-y divide-[#E0DEF5]">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center">
+                    <td
+                      colSpan={5}
+                      className="px-6 py-12 text-center"
+                    >
                       <div className="flex items-center justify-center gap-2 text-[#7775A0] font-semibold">
-                        <Loader2 size={18} className="animate-spin" />
+                        <Loader2
+                          size={18}
+                          className="animate-spin"
+                        />
                         Loading stores...
                       </div>
                     </td>
                   </tr>
                 ) : stores.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center">
+                    <td
+                      colSpan={5}
+                      className="px-6 py-12 text-center"
+                    >
                       <div className="text-[#7775A0] font-semibold">
                         No stores found.
                       </div>
+
                       {hasActiveFilters && (
                         <button
                           type="button"
@@ -769,27 +1229,45 @@ const StoresPage = () => {
                         key={storeId}
                         className="hover:bg-[#EEEDFE]/40 transition-colors duration-150 group"
                       >
-                        {/* Brand / Store Name & Logo */}
+
+                        {/* ====================================
+                            BRAND / STORE
+                        ==================================== */}
+
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-4">
-                            {/* Store Logo Thumbnail */}
+
+                            {/* Logo */}
+
                             <div className="w-12 h-12 rounded-full bg-white border border-[#E0DEF5] p-1 flex-shrink-0 shadow-sm flex items-center justify-center overflow-hidden">
                               {logoUrl ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img
                                   src={logoUrl}
-                                  alt={store?.images?.logo?.alt || store.name}
+                                  alt={
+                                    store?.images?.logo?.alt ||
+                                    store.name ||
+                                    "Store logo"
+                                  }
                                   className="w-full h-full object-contain rounded-full"
                                 />
                               ) : (
-                                <Store size={20} className="text-[#E0DEF5]" />
+                                <Store
+                                  size={20}
+                                  className="text-[#E0DEF5]"
+                                />
                               )}
                             </div>
 
+                            {/* Name and URL */}
+
                             <div>
                               <p className="text-[#1A1340] font-bold text-[15px] leading-snug hover:text-[#2D2380] transition-colors">
-                                <Link href={`/admin/stores/${storeId}`}>
-                                  {store.name || "Untitled Store"}
+                                <Link
+                                  href={`/admin/stores/${storeId}`}
+                                >
+                                  {store.name ||
+                                    "Untitled Store"}
                                 </Link>
                               </p>
 
@@ -800,7 +1278,10 @@ const StoresPage = () => {
                                   rel="noopener noreferrer"
                                   className="flex items-center gap-1 mt-1 text-[#7775A0] hover:text-[#FF6B35] text-[12px] transition-colors"
                                 >
-                                  {safeHostname(store.officialUrl)}
+                                  {safeHostname(
+                                    store.officialUrl
+                                  )}
+
                                   <ExternalLink size={10} />
                                 </a>
                               ) : (
@@ -812,48 +1293,81 @@ const StoresPage = () => {
                           </div>
                         </td>
 
-                        {/* Taxonomy (Categories) */}
+                        {/* ====================================
+                            TAXONOMY
+                        ==================================== */}
+
                         <td className="px-6 py-4 align-top">
                           <div className="flex flex-col gap-2 pt-1">
+
                             <span className="flex items-center gap-1.5 text-[#1A1340] text-[13px] font-medium">
-                              <Layers size={14} className="text-[#2D2380]" />
-                              {getPrimaryCategoryName(store)}
+                              <Layers
+                                size={14}
+                                className="text-[#2D2380]"
+                              />
+
+                              {getPrimaryCategoryName(
+                                store
+                              )}
                             </span>
+
                             <span className="text-[#7775A0] text-[12px]">
                               /{store.slug || "no-slug"}
                             </span>
                           </div>
                         </td>
 
-                        {/* Geo & Affiliate Network */}
+                        {/* ====================================
+                            GEO & AFFILIATE NETWORK
+                        ==================================== */}
+
                         <td className="px-6 py-4 align-top">
                           <div className="flex flex-col gap-2 pt-1">
+
                             <span className="flex items-center gap-1.5 text-[#1A1340] text-[13px] font-medium">
-                              <Globe size={14} className="text-[#7775A0]" />
+                              <Globe
+                                size={14}
+                                className="text-[#7775A0]"
+                              />
+
                               {getCountryLabel(store)}
                             </span>
+
                             <span className="flex items-center gap-1.5 text-[#7775A0] text-[13px]">
                               <Network size={14} />
+
                               {getNetworkName(store)}
                             </span>
                           </div>
                         </td>
 
-                        {/* Status & Stats */}
+                        {/* ====================================
+                            STATUS & STATS
+                        ==================================== */}
+
                         <td className="px-6 py-4 align-top">
                           <div className="flex flex-col items-start gap-2 pt-1">
+
                             <div className="flex items-center gap-2">
-                              {getStatusBadge(store.isActive)}
+                              {getStatusBadge(
+                                store.isActive
+                              )}
+
                               {store.isFeatured && (
                                 <span
                                   className="flex items-center gap-1 px-2.5 py-1 bg-[#F4A836]/15 text-[#BA7517] text-[11px] font-bold uppercase tracking-wider rounded-md border border-[#F4A836]/30"
                                   title="Featured Store"
                                 >
-                                  <Star size={12} fill="currentColor" />{" "}
+                                  <Star
+                                    size={12}
+                                    fill="currentColor"
+                                  />
+
                                   Featured
                                 </span>
                               )}
                             </div>
+
                             <span className="text-[#7775A0] text-[12px] font-medium mt-1">
                               {store.couponsCount ??
                                 store.activeCouponsCount ??
@@ -863,36 +1377,62 @@ const StoresPage = () => {
                           </div>
                         </td>
 
-                        {/* Actions */}
+                        {/* ====================================
+                            ACTIONS
+                        ==================================== */}
+
                         <td className="px-6 py-4 align-top text-right pt-4">
-                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center justify-end gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition-opacity">
+
+                            {/* Edit */}
+
                             <Link
                               href={`/admin/stores/${storeId}`}
                               className="p-2 text-[#7775A0] hover:text-[#2D2380] hover:bg-[#EEEDFE] rounded-lg transition-colors"
                               title="Edit Store"
+                              aria-label={`Edit ${store.name}`}
                             >
                               <Edit size={16} />
                             </Link>
 
+                            {/* Delete */}
+
                             <button
                               type="button"
-                              onClick={() => handleDelete(store)}
-                              disabled={deletingId === storeId}
+                              onClick={() =>
+                                handleDelete(store)
+                              }
+                              disabled={Boolean(deletingId)}
                               className="p-2 text-[#7775A0] hover:text-[#E24B4A] hover:bg-[#FCEBEB] rounded-lg transition-colors disabled:opacity-50"
                               title="Delete Store"
+                              aria-label={`Delete ${store.name}`}
                             >
                               {deletingId === storeId ? (
-                                <Loader2 size={16} className="animate-spin" />
+                                <Loader2
+                                  size={16}
+                                  className="animate-spin"
+                                />
                               ) : (
                                 <Trash2 size={16} />
                               )}
                             </button>
 
+                            {/* Public store page */}
+
                             <Link
-                              href={store.slug ? `/store/${store.slug}` : "#"}
-                              target={store.slug ? "_blank" : undefined}
+                              href={
+                                store.slug
+                                  ? `/stores/${store.slug}`
+                                  : "#"
+                              }
+                              target={
+                                store.slug
+                                  ? "_blank"
+                                  : undefined
+                              }
                               className="p-2 text-[#7775A0] hover:text-[#2D2380] hover:bg-[#EEEDFE] rounded-lg transition-colors"
                               title="View Public Store Page"
+                              aria-label={`View public page for ${store.name}`}
                             >
                               <MoreVertical size={16} />
                             </Link>
@@ -906,27 +1446,62 @@ const StoresPage = () => {
             </table>
           </div>
 
-          {/* ─── PAGINATION ─── */}
+          {/* ==================================================
+              PAGINATION
+          ================================================== */}
+
           <div className="px-6 py-4 border-t border-[#E0DEF5] bg-white flex flex-col md:flex-row md:items-center justify-between gap-3">
+
+            {/* Total records */}
+
             <span className="text-[#7775A0] text-[13px] font-medium">
-              Showing <strong className="text-[#1A1340]">{startItem}</strong> to{" "}
-              <strong className="text-[#1A1340]">{endItem}</strong> of{" "}
-              <strong className="text-[#1A1340]">{total}</strong> Stores
+              Showing{" "}
+              <strong className="text-[#1A1340]">
+                {startItem}
+              </strong>{" "}
+              to{" "}
+              <strong className="text-[#1A1340]">
+                {endItem}
+              </strong>{" "}
+              of{" "}
+              <strong className="text-[#1A1340]">
+                {total}
+              </strong>{" "}
+              Stores
+
               {isRefreshing && (
                 <span className="inline-flex items-center gap-1 ml-3 text-[#2D2380]">
-                  <Loader2 size={12} className="animate-spin" />
+                  <Loader2
+                    size={12}
+                    className="animate-spin"
+                  />
                   Refreshing
                 </span>
               )}
             </span>
 
+            {/* Pagination controls */}
+
             <div className="flex items-center gap-2">
+
+              {/* Previous */}
+
               <button
                 type="button"
-                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                disabled={page <= 1 || isLoading}
+                onClick={() =>
+                  setPage((prev) =>
+                    Math.max(1, prev - 1)
+                  )
+                }
+                disabled={
+                  page <= 1 ||
+                  isLoading ||
+                  isRefreshing
+                }
                 className={`px-4 py-2 rounded-lg border border-[#E0DEF5] text-[13px] font-bold transition-colors ${
-                  page <= 1 || isLoading
+                  page <= 1 ||
+                  isLoading ||
+                  isRefreshing
                     ? "text-[#C1BFD9] cursor-not-allowed bg-[#F7F6FF]"
                     : "text-[#7775A0] hover:text-[#2D2380] hover:bg-[#F7F6FF]"
                 }`}
@@ -934,19 +1509,40 @@ const StoresPage = () => {
                 Previous
               </button>
 
+              {/* Page indicator */}
+
               <span className="text-[#7775A0] text-[13px] font-semibold px-2">
-                Page <strong className="text-[#1A1340]">{page}</strong> of{" "}
-                <strong className="text-[#1A1340]">{totalPages}</strong>
+                Page{" "}
+                <strong className="text-[#1A1340]">
+                  {page}
+                </strong>{" "}
+                of{" "}
+                <strong className="text-[#1A1340]">
+                  {totalPages}
+                </strong>
               </span>
+
+              {/* Next */}
 
               <button
                 type="button"
                 onClick={() =>
-                  setPage((prev) => Math.min(totalPages, prev + 1))
+                  setPage((prev) =>
+                    Math.min(
+                      totalPages,
+                      prev + 1
+                    )
+                  )
                 }
-                disabled={page >= totalPages || isLoading}
+                disabled={
+                  page >= totalPages ||
+                  isLoading ||
+                  isRefreshing
+                }
                 className={`px-4 py-2 rounded-lg border border-[#E0DEF5] text-[13px] font-bold transition-colors ${
-                  page >= totalPages || isLoading
+                  page >= totalPages ||
+                  isLoading ||
+                  isRefreshing
                     ? "text-[#C1BFD9] cursor-not-allowed bg-[#F7F6FF]"
                     : "text-[#7775A0] hover:text-[#2D2380] hover:bg-[#F7F6FF]"
                 }`}

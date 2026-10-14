@@ -1,7 +1,7 @@
 /**
  * @model Store
  * @description A retail brand/merchant that Sociantech has affiliate coupons for.
- * Each store has a dedicated landing page (/store/:slug) featuring its coupons,
+ * Each store has a dedicated landing page (/stores/:slug) featuring its coupons,
  * deals, SEO content, and affiliate tracking configuration.
  *
  * Affiliate flow:
@@ -34,7 +34,7 @@ const SeoSchema = new Schema(
     metaTitle: { type: String, trim: true, default: "", maxlength: 120 },
     metaDescription: { type: String, trim: true, default: "", maxlength: 320 },
 
-    // Canonical URL override (empty = use default /store/:slug)
+    // Canonical URL override (empty = use default /stores/:slug)
     canonicalUrl: { type: String, trim: true, default: "" },
 
     // false = <meta name="robots" content="noindex"> (e.g. for private/test stores)
@@ -93,7 +93,7 @@ const StoreSchema = new Schema(
       maxlength: 140,
     },
 
-    // URL slug: /store/:slug — always lowercase
+    // URL slug: /stores/:slug — always lowercase
     slug: {
       type: String,
       required: true,
@@ -244,7 +244,7 @@ const StoreSchema = new Schema(
        * Written to rank for "{storeName} coupons" and related queries.
        * Rendered below the coupon grid. HTML or markdown (sanitize on display).
        */
-      longDescription: { type: String, trim: true, default: "", maxlength: 15000 },
+      longDescription: { type: String, trim: true, default: "" },
 
       // "Why shop at {store}?" section — trust-building copy below the long description
       whyShop: { type: String, trim: true, default: "", maxlength: 3000 },
@@ -326,23 +326,27 @@ const StoreSchema = new Schema(
      * if the user changes their name, the cached string becomes wrong.
      * Always populate the relation instead.
      */
-    createdBy: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
-      index: true,
-    },
+   createdBy: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "User",
+  default: null,
+},
 
-    /**
-     * User who last modified this store record.
-     * Set by the API route handler on every PUT/PATCH operation.
-     * Critical for auditing changes to affiliate links in multi-editor teams.
-     */
-    updatedBy: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
-    },
+createdByName: {
+  type: String,
+  default: "Admin",
+},
+
+updatedBy: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "User",
+  default: null,
+},
+
+updatedByName: {
+  type: String,
+  default: "",
+},
   },
   { timestamps: true },
 );

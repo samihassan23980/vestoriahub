@@ -1,22 +1,41 @@
+
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+
+import {
+  ADMIN_SESSION_COOKIE,
+} from "@/app/lib/authSession";
 
 export async function POST() {
   try {
-    const cookieStore = cookies();
-
-    // 1. Next.js server context se tamam auth cookies delete karein
-    cookieStore.delete("admin_token");
-    cookieStore.delete("user_role");
-    cookieStore.delete("token");
-    cookieStore.delete("portal_token");
-
     const res = NextResponse.json(
-      { success: true, message: "Logout successful. Session cleared." },
-      { status: 200 },
+      {
+        success: true,
+        message: "Logout successful. Session cleared.",
+      },
+      { status: 200 }
     );
 
-    // 2. Response headers par maxAge: 0 set karein taake browser client se cookies foran flush ho jayein
+    // Clear existing authentication cookies.
+    // Preserve all cookie names for compatibility.
+    const cookiesToClear = [
+      {
+        name: ADMIN_SESSION_COOKIE,
+        httpOnly: true,
+      },
+      {
+        name: "user_role",
+        httpOnly: false,
+      },
+      {
+        name: "token",
+        httpOnly: true,
+      },
+      {
+        name: "portal_token",
+        httpOnly: true,
+      },
+    ];
+
     const expiredCookieOptions = {
       path: "/",
       maxAge: 0,
@@ -25,17 +44,22 @@ export async function POST() {
       sameSite: "lax",
     };
 
-    res.cookies.set("admin_token", "", { ...expiredCookieOptions, httpOnly: true });
-    res.cookies.set("user_role", "", { ...expiredCookieOptions, httpOnly: false });
-    res.cookies.set("token", "", { ...expiredCookieOptions, httpOnly: true });
-    res.cookies.set("portal_token", "", { ...expiredCookieOptions, httpOnly: true });
+    for (const cookie of cookiesToClear) {
+      res.cookies.set(cookie.name, "", {
+        ...expiredCookieOptions,
+        httpOnly: cookie.httpOnly,
+      });
+    }
 
     return res;
   } catch (error) {
     console.error("Logout API Error:", error);
+
     return NextResponse.json(
-      { error: "An error occurred while logging out." },
-      { status: 500 },
+      {
+        error: "An error occurred while logging out.",
+      },
+      { status: 500 }
     );
   }
 }

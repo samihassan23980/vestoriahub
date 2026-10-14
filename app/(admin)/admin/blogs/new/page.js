@@ -15,7 +15,6 @@ import {
   MessageCircleQuestion,
   Plus,
   Trash2,
-  Eye,
   Type,
   Store,
   Clock,
@@ -33,8 +32,6 @@ import TextEditor from "../../editor/page";
 import MediaUploader from "@/app/Components/media/MediaUploader";
 
 // ─── ROBUST API EXTRACTOR HELPER ───────────────────────────────────────────
-// This safely extracts the array whether the API returns:
-// [ ... ], { key: [ ... ] }, { data: { key: [ ... ] } }, or { data: [ ... ] }
 const getArrayFromApi = (data, key) => {
   if (Array.isArray(data)) return data;
   if (data && Array.isArray(data[key])) return data[key];
@@ -43,12 +40,23 @@ const getArrayFromApi = (data, key) => {
   return [];
 };
 
+// ─── SLUG SANITIZER HELPER ─────────────────────────────────────────────────
+const sanitizeSlugString = (val = "") => {
+  return String(val)
+    .toLowerCase()
+    .trim()
+    .replace(/^\/+|\/+$/g, "")      // Shuru aur aakhir ke '/' hataye
+    .replace(/[^a-z0-9\s-]/g, "")   // Sirf alphabets, numbers, hyphens
+    .replace(/\s+/g, "-")          // Spaces ko '-' kare
+    .replace(/-+/g, "-");          // Duplicate '--' ko '-' kare
+};
+
 export default function NewBlogPost() {
   const router = useRouter();
 
   // App States
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingRefs, setIsLoadingRefs] = useState(true); // Replaces isLoadingData
+  const [isLoadingRefs, setIsLoadingRefs] = useState(true);
   const [copiedToken, setCopiedToken] = useState(null);
   const [imageMode, setImageMode] = useState("upload");
 
@@ -56,18 +64,18 @@ export default function NewBlogPost() {
   const [categories, setCategories] = useState([]);
   const [stores, setStores] = useState([]);
 
-  // ─── EXACT SCHEMA MAPPING ──────────────────────────────────────────────────
+  // ─── FORM DATA ───────────────────────────────────────────────────────────
   const [formData, setFormData] = useState({
     title: "",
     slug: "",
     excerpt: "",
     content: "",
     category: "",
-    tags: "", // Handled as string in UI, array on submit
+    tags: "",
     featuredImage: { url: "", alt: "" },
     author: { name: "Sociantech Team", role: "Deal Expert", avatar: "" },
     status: "draft",
-    relatedStores: [], // Array of ObjectIds
+    relatedStores: [],
     faqs: [],
     embeddedBlocks: [],
     seo: {
@@ -78,7 +86,7 @@ export default function NewBlogPost() {
     },
   });
 
-  // ─── FETCH CATEGORIES & STORES ─────────────────────────────────────────────
+  // ─── FETCH CATEGORIES & STORES ───────────────────────────────────────────
   useEffect(() => {
     const fetchReferences = async () => {
       setIsLoadingRefs(true);
@@ -91,12 +99,8 @@ export default function NewBlogPost() {
         const catData = catRes.ok ? await catRes.json() : null;
         const storeData = storeRes.ok ? await storeRes.json() : null;
 
-        // Use the robust helper to extract arrays safely
-        const parsedCategories = getArrayFromApi(catData, "categories");
-        const parsedStores = getArrayFromApi(storeData, "stores");
-
-        setCategories(parsedCategories);
-        setStores(parsedStores);
+        setCategories(getArrayFromApi(catData, "categories"));
+        setStores(getArrayFromApi(storeData, "stores"));
       } catch (error) {
         console.error("Failed to fetch references:", error);
         Swal.fire({
@@ -118,14 +122,17 @@ export default function NewBlogPost() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // 🛠️ FIX: Manual slug typing par sanitize karega (kabhi '/' save nahi hone dega)
+  const handleSlugChange = (e) => {
+    const cleaned = sanitizeSlugString(e.target.value);
+    setFormData((prev) => ({ ...prev, slug: cleaned }));
+  };
+
+  // 🛠️ FIX: Title se auto slug banate waqt clean karega
   const generateSlug = () => {
     if (!formData.title || formData.slug) return;
-    const slug = formData.title
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-");
-    setFormData((prev) => ({ ...prev, slug }));
+    const cleanSlug = sanitizeSlugString(formData.title);
+    setFormData((prev) => ({ ...prev, slug: cleanSlug }));
   };
 
   const handleSeoChange = (field, value) => {
@@ -149,12 +156,11 @@ export default function NewBlogPost() {
   // ─── FAQ HANDLERS ────────────────────────────────────────────────────────
   const addFaq = () => {
     if (formData.faqs.length >= 15) {
-      Swal.fire({
+      return Swal.fire({
         icon: "warning",
         title: "Limit Reached",
         text: "You can add a maximum of 15 FAQs per blog post.",
       });
-      return;
     }
     setFormData((prev) => ({
       ...prev,
@@ -194,12 +200,11 @@ export default function NewBlogPost() {
   // ─── EMBEDDED BLOCKS HANDLERS ────────────────────────────────────────────
   const addEmbed = () => {
     if (formData.embeddedBlocks.length >= 30) {
-      Swal.fire({
+      return Swal.fire({
         icon: "warning",
         title: "Limit Reached",
         text: "You can add a maximum of 30 embed blocks per post.",
       });
-      return;
     }
     const newId = Date.now().toString(36);
     setFormData((prev) => ({
@@ -243,7 +248,7 @@ export default function NewBlogPost() {
     setTimeout(() => setCopiedToken(null), 2000);
   };
 
-  // ─── SUBMIT HANDLER (API INTEGRATION) ────────────────────────────────────
+  // ─── SUBMIT HANDLER ──────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -261,7 +266,9 @@ export default function NewBlogPost() {
         text: "Blog content cannot be empty. Please write something in the editor.",
       });
     }
-    if (!formData.slug) {
+
+    const cleanedSlug = sanitizeSlugString(formData.slug || formData.title);
+    if (!cleanedSlug) {
       return Swal.fire({
         icon: "error",
         title: "Missing Slug",
@@ -273,53 +280,93 @@ export default function NewBlogPost() {
 
     const payload = {
       ...formData,
+      slug: cleanedSlug, // Cleaned guaranteed
       tags: formData.tags
         .split(",")
         .map((t) => t.trim())
         .filter(Boolean),
     };
+// Escape dynamic text before inserting it into SweetAlert HTML.
+const escapeHtml = (value = "") =>
+  String(value).replace(/[&<>"']/g, (char) => {
+    const entities = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    };
 
-    try {
-      const response = await fetch("/api/admin/blogs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+    return entities[char];
+  });
 
-      const data = await response.json();
+try {
+  const response = await fetch("/api/admin/blogs", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
 
-      if (!response.ok || !data.success) {
-        if (data.details && data.details.length > 0) {
-          const errorList = data.details
-            .map((err) => `<li>${err}</li>`)
-            .join("");
-          throw new Error(
-            `<p style="margin-bottom:8px;">Please check the following issues:</p><ul style="text-align:left; margin-left:20px; color:#E24B4A;">${errorList}</ul>`,
-          );
-        }
-        throw new Error(data.error || "Failed to save post due to an unknown server error.");
-      }
+  const data = await response.json();
+
+  if (!response.ok || !data.success) {
+    if (Array.isArray(data.details) && data.details.length > 0) {
+      const errorList = data.details
+        .map((err) => `<li>${escapeHtml(err)}</li>`)
+        .join("");
 
       await Swal.fire({
-        icon: "success",
-        title: "Post Created!",
-        text: "Your blog post has been successfully saved and published.",
-        confirmButtonColor: "#2D2380",
-      });
-
-      router.push("/admin/blogs");
-      router.refresh();
-    } catch (error) {
-      console.error("Submission error:", error);
-      Swal.fire({
         icon: "error",
-        title: "Submission Failed",
-        html: error.message || "We couldn't save your post. Please check your inputs and try again.",
+        title: "Please Check Your Inputs",
+        html: `
+          <div style="text-align:left;">
+            <p style="margin-bottom:8px;">
+              Please check the following issues:
+            </p>
+            <ul style="margin-left:20px;color:#E24B4A;">
+              ${errorList}
+            </ul>
+          </div>
+        `,
         confirmButtonColor: "#E24B4A",
       });
-    } finally {
-      setIsSubmitting(false);
+
+      return;
     }
+
+    throw new Error(
+      data.error || "Failed to save post due to a server error."
+    );
+  }
+
+  await Swal.fire({
+    icon: "success",
+    title: "Post Created!",
+    text: "Your blog post has been successfully saved.",
+    confirmButtonColor: "#2D2380",
+  });
+
+  router.push("/admin/blogs");
+  router.refresh();
+
+} catch (error) {
+  console.error("Submission error:", error);
+
+  await Swal.fire({
+    icon: "error",
+    title: "Submission Failed",
+    text:
+      error.message ||
+      "We couldn't save your post. Please check your inputs.",
+    confirmButtonColor: "#E24B4A",
+  });
+
+} finally {
+  setIsSubmitting(false);
+}
   };
 
   // ─── UI COMPONENTS ───────────────────────────────────────────────────────
@@ -363,7 +410,20 @@ export default function NewBlogPost() {
   return (
     <div className="min-h-screen bg-[#F7F6FF] p-6 md:p-8">
       <div className="max-w-[1280px] mx-auto">
-        <form onSubmit={handleSubmit}>
+        {/* 🛠️ FIX 1: onKeyDown blocks Enter key from submitting form outside of textareas/editors */}
+        <form
+          onSubmit={handleSubmit}
+          onKeyDown={(e) => {
+            if (
+              e.key === "Enter" &&
+              e.target.tagName !== "TEXTAREA" &&
+              !e.target.isContentEditable &&
+              e.target.type !== "submit"
+            ) {
+              e.preventDefault();
+            }
+          }}
+        >
           {/* ─── STICKY HEADER ─── */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 sticky top-0 z-20 bg-[#F7F6FF]/90 backdrop-blur-md py-4 border-b border-[#E0DEF5]/50">
             <div className="flex items-center gap-4">
@@ -407,8 +467,6 @@ export default function NewBlogPost() {
           </div>
 
           <div className="space-y-6">
-            {/* ─── SINGLE COLUMN FULL-WIDTH LAYOUT ─── */}
-            
             {/* 1. Title & Excerpt */}
             <div className="bg-white border border-[#E0DEF5] rounded-xl p-6 shadow-sm space-y-5">
               <div>
@@ -499,13 +557,15 @@ export default function NewBlogPost() {
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7775A0] text-[12px] font-mono select-none">
                       /blog/
                     </span>
+                    {/* 🛠️ FIX 2: handleSlugChange prevents slashes from ever being typed/stored */}
                     <input
                       type="text"
                       name="slug"
                       value={formData.slug}
-                      onChange={handleInputChange}
+                      onChange={handleSlugChange}
                       maxLength={200}
                       required
+                      placeholder="best-carplay-chargers"
                       className="w-full pl-[52px] pr-4 py-2.5 bg-[#F7F6FF] border border-[#E0DEF5] rounded-lg text-[13px] font-mono text-[#2D2380] outline-none focus:border-[#2D2380]"
                     />
                   </div>
@@ -563,8 +623,7 @@ export default function NewBlogPost() {
                       Dynamic Embeds (Products & CTAs)
                     </h2>
                     <p className="text-[12px] text-[#7775A0]">
-                      Create high-converting UI blocks and paste their token
-                      into the text editor.
+                      Create high-converting UI blocks and paste their token into the text editor.
                     </p>
                   </div>
                 </div>
@@ -591,16 +650,13 @@ export default function NewBlogPost() {
                       key={idx}
                       className="p-5 bg-[#F7F6FF] border border-[#E0DEF5] rounded-xl relative group"
                     >
-                      {/* Token Bar */}
                       <div className="flex items-center justify-between bg-white border border-[#E0DEF5] p-2 rounded-lg mb-4">
                         <code className="text-[14px] font-mono font-bold text-[#FF6B35] px-2">
                           {block.placementToken}
                         </code>
                         <button
                           type="button"
-                          onClick={() =>
-                            handleCopyToken(block.placementToken)
-                          }
+                          onClick={() => handleCopyToken(block.placementToken)}
                           className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider bg-[#EEEDFE] text-[#2D2380] px-3 py-1.5 rounded-md hover:bg-[#2D2380] hover:text-white transition-colors"
                         >
                           {copiedToken === block.placementToken ? (
@@ -623,7 +679,6 @@ export default function NewBlogPost() {
                         <Trash2 size={16} />
                       </button>
 
-                      {/* Fields */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="md:col-span-2">
                           <label className="block text-[11px] font-bold text-[#7775A0] uppercase mb-1">
@@ -670,11 +725,7 @@ export default function NewBlogPost() {
                             <textarea
                               value={block.description}
                               onChange={(e) =>
-                                updateEmbed(
-                                  idx,
-                                  "description",
-                                  e.target.value,
-                                )
+                                updateEmbed(idx, "description", e.target.value)
                               }
                               rows={2}
                               className="w-full bg-white border border-[#E0DEF5] rounded-lg px-3 py-2 text-[13px] outline-none resize-none"
@@ -722,11 +773,7 @@ export default function NewBlogPost() {
                               type="text"
                               value={block.discountBadge}
                               onChange={(e) =>
-                                updateEmbed(
-                                  idx,
-                                  "discountBadge",
-                                  e.target.value,
-                                )
+                                updateEmbed(idx, "discountBadge", e.target.value)
                               }
                               className="w-full bg-white border border-[#E0DEF5] rounded-lg px-3 py-2 text-[13px] outline-none"
                             />
@@ -772,10 +819,7 @@ export default function NewBlogPost() {
             <div className="bg-white border border-[#E0DEF5] rounded-xl p-6 shadow-sm">
               <div className="flex items-center justify-between mb-6 border-b border-[#E0DEF5] pb-4">
                 <div className="flex items-center gap-2">
-                  <MessageCircleQuestion
-                    size={20}
-                    className="text-[#2D2380]"
-                  />
+                  <MessageCircleQuestion size={20} className="text-[#2D2380]" />
                   <div>
                     <h2 className="text-[16px] font-bold text-[#1A1340]">
                       Structured FAQs
@@ -859,9 +903,7 @@ export default function NewBlogPost() {
                   <input
                     type="text"
                     value={formData.author.name}
-                    onChange={(e) =>
-                      handleAuthorChange("name", e.target.value)
-                    }
+                    onChange={(e) => handleAuthorChange("name", e.target.value)}
                     maxLength={120}
                     className="w-full px-3 py-2 bg-[#F7F6FF] border border-[#E0DEF5] rounded-md text-[13px] outline-none"
                   />
@@ -873,9 +915,7 @@ export default function NewBlogPost() {
                   <input
                     type="text"
                     value={formData.author.role}
-                    onChange={(e) =>
-                      handleAuthorChange("role", e.target.value)
-                    }
+                    onChange={(e) => handleAuthorChange("role", e.target.value)}
                     maxLength={80}
                     className="w-full px-3 py-2 bg-[#F7F6FF] border border-[#E0DEF5] rounded-md text-[13px] outline-none"
                   />
@@ -887,9 +927,7 @@ export default function NewBlogPost() {
                   <input
                     type="url"
                     value={formData.author.avatar}
-                    onChange={(e) =>
-                      handleAuthorChange("avatar", e.target.value)
-                    }
+                    onChange={(e) => handleAuthorChange("avatar", e.target.value)}
                     placeholder="https://..."
                     className="w-full px-3 py-2 bg-[#F7F6FF] border border-[#E0DEF5] rounded-md text-[13px] outline-none"
                   />
@@ -900,8 +938,6 @@ export default function NewBlogPost() {
             {/* 7. Dual-Mode Featured Image Upload */}
             <div className="bg-white border border-[#E0DEF5] rounded-xl p-6 shadow-sm space-y-4">
               <SectionHeader title="Featured Image" icon={ImageIcon} />
-
-              {/* Toggle: Upload vs Link */}
               <div className="flex bg-[#F7F6FF] border border-[#E0DEF5] p-1 rounded-lg max-w-xs mb-4">
                 <button
                   type="button"
@@ -1028,7 +1064,7 @@ export default function NewBlogPost() {
               </div>
             </div>
 
-            {/* 9. Internal Linking (Multi-Select Stores) */}
+            {/* 9. Internal Linking */}
             <div className="bg-white border border-[#E0DEF5] rounded-xl p-6 shadow-sm space-y-4">
               <SectionHeader
                 title="Related Stores"
@@ -1084,7 +1120,6 @@ export default function NewBlogPost() {
                 Link up to 10 stores to pass internal link equity.
               </p>
             </div>
-
           </div>
         </form>
 
@@ -1104,43 +1139,26 @@ export default function NewBlogPost() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
             <div className="space-y-1 md:col-span-2 bg-[rgba(244,168,54,0.1)] border border-[rgba(244,168,54,0.3)] p-4 rounded-lg">
               <h3 className="text-[#F4A836] font-bold text-[14px] flex items-center gap-2">
-                <Component size={16} /> How to add Products & Buttons (Dynamic
-                Embeds)
+                <Component size={16} /> How to add Products & Buttons (Dynamic Embeds)
               </h3>
               <p className="text-[13px] text-[#E0DEF5] leading-relaxed mt-2">
-                <span className="font-semibold text-white">What it does:</span>{" "}
-                This is how you insert beautiful product cards or buttons into
-                your article without writing messy code.
-                <br />
-                <br />
-                <span className="font-semibold text-white">How to use it:</span>
-                <br />
-                1. Click <b>"Create Embed"</b> above.
-                <br />
-                2. Fill in the details (like the Product Name, Price, and Amazon
-                Link).
-                <br />
-                3. Click <b>"Copy Token"</b>. It will copy a shortcode like{" "}
-                <code>{`{{embed:item-123}}`}</code>.<br />
-                4. <b>Paste that shortcode</b> into the big text editor exactly
-                where you want the product card to appear!
+                <span className="font-semibold text-white">What it does:</span> This is how you insert beautiful product cards or buttons into your article without writing messy code.
+                <br /><br />
+                <span className="font-semibold text-white">How to use it:</span><br />
+                1. Click <b>"Create Embed"</b> above.<br />
+                2. Fill in the details (like the Product Name, Price, and Amazon Link).<br />
+                3. Click <b>"Copy Token"</b>. It will copy a shortcode like <code>{`{{embed:item-123}}`}</code>.<br />
+                4. <b>Paste that shortcode</b> into the big text editor exactly where you want the product card to appear!
               </p>
             </div>
             <div className="space-y-1 bg-[rgba(34,176,125,0.1)] border border-[rgba(34,176,125,0.3)] p-4 rounded-lg">
               <h3 className="text-[#22B07D] font-bold text-[14px] flex items-center gap-2">
-                <MessageCircleQuestion size={16} /> Structured FAQs (Google
-                Secret)
+                <MessageCircleQuestion size={16} /> Structured FAQs (Google Secret)
               </h3>
               <p className="text-[13px] text-[#E0DEF5] leading-relaxed mt-2">
-                <span className="font-semibold text-white">What it does:</span>{" "}
-                Adding FAQs here creates hidden code that Google loves. It
-                allows Google to show your Questions & Answers directly on the
-                Search page.
-                <br />
-                <br />
-                <span className="font-semibold text-white">Rule:</span> Keep
-                your answers short (3-4 sentences max). You can add up to 15
-                questions per article.
+                <span className="font-semibold text-white">What it does:</span> Adding FAQs here creates hidden code that Google loves. It allows Google to show your Questions & Answers directly on the Search page.
+                <br /><br />
+                <span className="font-semibold text-white">Rule:</span> Keep your answers short (3-4 sentences max). You can add up to 15 questions per article.
               </p>
             </div>
             <div className="space-y-1 p-4">
@@ -1148,14 +1166,9 @@ export default function NewBlogPost() {
                 Author & Trust (E-E-A-T)
               </h3>
               <p className="text-[13px] text-[#E0DEF5] leading-relaxed mt-2">
-                <span className="font-semibold text-white">What it does:</span>{" "}
-                Google ranks sites higher if they know real experts are writing
-                the content.
-                <br />
-                <br />
-                <span className="font-semibold text-white">Rule:</span> Always
-                use "Sociantech Team" and "Deal Expert" for general tips. If it
-                is a deep-dive review, use the real editor's name.
+                <span className="font-semibold text-white">What it does:</span> Google ranks sites higher if they know real experts are writing the content.
+                <br /><br />
+                <span className="font-semibold text-white">Rule:</span> Always use "Sociantech Team" and "Deal Expert" for general tips. If it is a deep-dive review, use the real editor's name.
               </p>
             </div>
           </div>

@@ -332,47 +332,137 @@ export default function EditBlogPost() {
         .filter(Boolean),
     };
 
-    try {
-      const response = await fetch(`/api/admin/blogs/${slug}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+   // Safely escape API error messages before rendering HTML.
+const escapeHtml = (value = "") => {
+  return String(value).replace(/[&<>"']/g, (char) => {
+    const entities = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    };
 
-      const data = await response.json();
+    return entities[char];
+  });
+};
 
-      if (!response.ok || !data.success) {
-        if (data.details && data.details.length > 0) {
-          const errorList = data.details
-            .map((err) => `<li>${err}</li>`)
-            .join("");
-          throw new Error(
-            `<p style="margin-bottom:8px;">Please check the following issues:</p><ul style="text-align:left; margin-left:20px; color:#E24B4A;">${errorList}</ul>`,
-          );
-        }
-        throw new Error(data.error || "Failed to update post due to an unknown server error.");
-      }
+try {
+  // Validate the blog identifier before sending request.
+  if (!slug || !String(slug).trim()) {
+    throw new Error("Blog slug is missing. Please reload the page.");
+  }
+
+  const response = await fetch(
+    `/api/admin/blogs/${encodeURIComponent(String(slug).trim())}`,
+    {
+      method: "PUT",
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+
+  const data = await response.json();
+
+  // ============================================================
+  // API ERROR HANDLING
+  // ============================================================
+
+  if (!response.ok || !data.success) {
+    // Detailed Mongoose validation errors.
+    if (
+      Array.isArray(data.details) &&
+      data.details.length > 0
+    ) {
+      const errorList = data.details
+        .map(
+          (err) => `
+            <li style="margin-bottom:6px;">
+              ${escapeHtml(err)}
+            </li>
+          `
+        )
+        .join("");
 
       await Swal.fire({
-        icon: "success",
-        title: "Updated Successfully!",
-        text: "Your blog post has been successfully updated.",
-        confirmButtonColor: "#2D2380",
-      });
-
-      router.push("/admin/blogs");
-      router.refresh();
-    } catch (error) {
-      console.error("Update error:", error);
-      Swal.fire({
         icon: "error",
-        title: "Update Failed",
-        html: error.message || "We couldn't update your post. Please check your inputs and try again.",
+        title: "Please Check Your Inputs",
+        html: `
+          <div style="text-align:left;">
+            <p style="margin-bottom:10px;">
+              Please check the following issues:
+            </p>
+
+            <ul style="
+              margin-left:20px;
+              padding-left:10px;
+              color:#E24B4A;
+              list-style-type:disc;
+            ">
+              ${errorList}
+            </ul>
+          </div>
+        `,
         confirmButtonColor: "#E24B4A",
       });
-    } finally {
-      setIsSubmitting(false);
+
+      return;
     }
+
+    // Authentication or permission errors.
+    if (response.status === 401) {
+      throw new Error(
+        data.error ||
+          "Your session has expired. Please sign in again."
+      );
+    }
+
+    if (response.status === 403) {
+      throw new Error(
+        data.error ||
+          "You do not have permission to update this blog."
+      );
+    }
+
+    // Other API errors.
+    throw new Error(
+      data.error ||
+        "Failed to update post due to an unknown server error."
+    );
+  }
+
+  // ============================================================
+  // SUCCESS
+  // ============================================================
+
+  await Swal.fire({
+    icon: "success",
+    title: "Updated Successfully!",
+    text: "Your blog post has been successfully updated.",
+    confirmButtonColor: "#2D2380",
+  });
+
+  router.push("/admin/blogs");
+  router.refresh();
+
+} catch (error) {
+  console.error("Update error:", error);
+
+  await Swal.fire({
+    icon: "error",
+    title: "Update Failed",
+    text:
+      error?.message ||
+      "We couldn't update your post. Please check your inputs and try again.",
+    confirmButtonColor: "#E24B4A",
+  });
+
+} finally {
+  setIsSubmitting(false);
+}
   };
 
   // ─── CALCULATE SEO SCORE DYNAMICALLY ───
@@ -418,7 +508,19 @@ export default function EditBlogPost() {
   return (
     <div className="min-h-screen bg-[#F7F6FF] p-6 md:p-8">
       <div className="max-w-[1280px] mx-auto">
-        <form onSubmit={handleSubmit}>
+        <form
+          onSubmit={handleSubmit}
+          onKeyDown={(e) => {
+            // Agar enter press hua aur target input field ya button hai to submit block karo
+            if (
+              e.key === "Enter" &&
+              e.target.tagName !== "TEXTAREA" &&
+              !e.target.isContentEditable
+            ) {
+              e.preventDefault();
+            }
+          }}
+        >
           {/* ─── STICKY HEADER ─── */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 sticky top-0 z-20 bg-[#F7F6FF]/90 backdrop-blur-md py-4 border-b border-[#E0DEF5]/50">
             <div className="flex items-center gap-4">
@@ -602,9 +704,7 @@ export default function EditBlogPost() {
                 </button>
                 <button
                   type="button"
-                  onClick={() =>
-                    setFormData({ ...formData, status: "draft" })
-                  }
+                  onClick={() => setFormData({ ...formData, status: "draft" })}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-[1.5px] font-semibold text-[13px] flex-1 justify-center transition-all ${formData.status === "draft" ? "border-[#7775A0] bg-[#F7F6FF] text-[#7775A0]" : "border-[#E0DEF5] text-[#7775A0]"}`}
                 >
                   Draft
@@ -736,9 +836,7 @@ export default function EditBlogPost() {
                         </code>
                         <button
                           type="button"
-                          onClick={() =>
-                            handleCopyToken(block.placementToken)
-                          }
+                          onClick={() => handleCopyToken(block.placementToken)}
                           className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider bg-[#EEEDFE] text-[#2D2380] px-3 py-1.5 rounded-md hover:bg-[#2D2380] hover:text-white transition-colors"
                         >
                           {copiedToken === block.placementToken ? (
@@ -803,11 +901,7 @@ export default function EditBlogPost() {
                             <textarea
                               value={block.description}
                               onChange={(e) =>
-                                updateEmbed(
-                                  idx,
-                                  "description",
-                                  e.target.value,
-                                )
+                                updateEmbed(idx, "description", e.target.value)
                               }
                               rows={2}
                               className="w-full bg-white border border-[#E0DEF5] rounded-lg px-3 py-2 text-[13px] outline-none resize-none"
@@ -902,10 +996,7 @@ export default function EditBlogPost() {
             <div className="bg-white border border-[#E0DEF5] rounded-xl p-6 shadow-sm">
               <div className="flex items-center justify-between mb-6 border-b border-[#E0DEF5] pb-4">
                 <div className="flex items-center gap-2">
-                  <MessageCircleQuestion
-                    size={20}
-                    className="text-[#2D2380]"
-                  />
+                  <MessageCircleQuestion size={20} className="text-[#2D2380]" />
                   <h2 className="text-[16px] font-bold text-[#1A1340]">
                     Structured FAQs ({formData.faqs.length}/15)
                   </h2>
@@ -982,9 +1073,7 @@ export default function EditBlogPost() {
                   <input
                     type="text"
                     value={formData.author.role}
-                    onChange={(e) =>
-                      handleAuthorChange("role", e.target.value)
-                    }
+                    onChange={(e) => handleAuthorChange("role", e.target.value)}
                     className="w-full px-3 py-2 bg-[#F7F6FF] border border-[#E0DEF5] rounded-md text-[13px] outline-none"
                   />
                 </div>
@@ -1107,9 +1196,7 @@ export default function EditBlogPost() {
                 <input
                   type="text"
                   value={formData.seo.metaTitle}
-                  onChange={(e) =>
-                    handleSeoChange("metaTitle", e.target.value)
-                  }
+                  onChange={(e) => handleSeoChange("metaTitle", e.target.value)}
                   maxLength={120}
                   className="w-full px-3 py-2 bg-white border border-[#E0DEF5] rounded-md text-[13px] outline-none"
                 />
@@ -1171,7 +1258,6 @@ export default function EditBlogPost() {
                 })}
               </div>
             </div>
-
           </div>
         </form>
       </div>

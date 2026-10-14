@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Swal from "sweetalert2";
@@ -27,6 +27,8 @@ import {
   Settings,
   Loader2,
   ShieldCheck,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 
 // ─── ROLES ──────────────────────────────────────────────────────────────────
@@ -58,10 +60,21 @@ const navGroups = [
   {
     title: "Overview",
     items: [
-      { name: "Dashboard", href: "/admin", icon: LayoutDashboard, roles: Object.values(ROLES) },
+      {
+        name: "Dashboard",
+        href: "/admin",
+        icon: LayoutDashboard,
+        roles: Object.values(ROLES),
+      },
       {
         name: "Analytics & Reports",
         href: "/admin/analytics",
+        icon: BarChart2,
+        roles: ADMIN_MANAGER,
+      },
+      {
+        name: "Activity Logs",
+        href: "/admin/activity-logs",
         icon: BarChart2,
         roles: ADMIN_MANAGER,
       },
@@ -74,13 +87,23 @@ const navGroups = [
         name: "Blog Editor",
         href: "/admin/blogs",
         icon: FileText,
-        roles: [...ADMIN_MANAGER, ROLES.SEO_MANAGER, ROLES.CONTENT_MANAGER, ROLES.BLOG_EDITOR],
+        roles: [
+          ...ADMIN_MANAGER,
+          ROLES.SEO_MANAGER,
+          ROLES.CONTENT_MANAGER,
+          ROLES.BLOG_EDITOR,
+        ],
       },
       {
         name: "Brands & Stores",
         href: "/admin/stores",
         icon: Store,
-        roles: [...ADMIN_MANAGER, ROLES.SEO_MANAGER, ROLES.CONTENT_MANAGER, ROLES.STORE_EDITOR],
+        roles: [
+          ...ADMIN_MANAGER,
+          ROLES.SEO_MANAGER,
+          ROLES.CONTENT_MANAGER,
+          ROLES.STORE_EDITOR,
+        ],
       },
       {
         name: "Affiliate Products",
@@ -97,7 +120,11 @@ const navGroups = [
         name: "Coupons & Offers",
         href: "/admin/coupons",
         icon: Tag,
-        roles: [...ADMIN_MANAGER, ROLES.CONTENT_MANAGER, ROLES.STORE_EDITOR],
+        roles: [
+          ...ADMIN_MANAGER,
+          ROLES.CONTENT_MANAGER,
+          ROLES.STORE_EDITOR,
+        ],
       },
       {
         name: "Categories",
@@ -224,10 +251,30 @@ const navGroups = [
   {
     title: "Platform & Settings",
     items: [
-      { name: "Users & Roles", href: "/admin/users", icon: Users, roles: ADMIN_ONLY },
-      { name: "Firewall", href: "/admin/firewall", icon: ShieldCheck, roles: ADMIN_ONLY },
-      { name: "Legal Pages", href: "/admin/legal", icon: FileText, roles: ADMIN_MANAGER },
-      { name: "Global Settings", href: "/admin/settings", icon: Settings, roles: ADMIN_MANAGER },
+      {
+        name: "Users & Roles",
+        href: "/admin/users",
+        icon: Users,
+        roles: ADMIN_ONLY,
+      },
+      {
+        name: "Firewall",
+        href: "/admin/firewall",
+        icon: ShieldCheck,
+        roles: ADMIN_ONLY,
+      },
+      {
+        name: "Legal Pages",
+        href: "/admin/legal",
+        icon: FileText,
+        roles: ADMIN_MANAGER,
+      },
+      {
+        name: "Global Settings",
+        href: "/admin/settings",
+        icon: Settings,
+        roles: ADMIN_MANAGER,
+      },
     ],
   },
 ];
@@ -236,17 +283,20 @@ function getNavForRole(role) {
   return navGroups
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => item.roles.includes(role)),
+      items: group.items.filter((item) =>
+        item.roles.includes(role)
+      ),
     }))
     .filter((group) => group.items.length > 0);
 }
 
 function getInitials(name) {
   if (!name) return "AD";
+
   return name
     .split(" ")
     .filter(Boolean)
-    .map((p) => p[0])
+    .map((part) => part[0])
     .join("")
     .slice(0, 2)
     .toUpperCase();
@@ -255,41 +305,204 @@ function getInitials(name) {
 const AdminLayout = ({ children }) => {
   const pathname = usePathname();
   const router = useRouter();
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
 
-  // ─── AUTHENTICATION GUARD ────────────────────────────────────────────────
+  // ─── PERSIST COLLAPSE STATE ────────────────────────────────────────────────
   useEffect(() => {
-    const verifyAccess = () => {
-      const raw = localStorage.getItem("adminuser");
-      if (!raw) {
-        router.push("/signin");
-        return;
+    try {
+      const savedCollapseState = localStorage.getItem("admin_sidebar_collapsed");
+      if (savedCollapseState !== null) {
+        setIsSidebarCollapsed(savedCollapseState === "true");
       }
+    } catch {
+      // Ignore local storage errors
+    }
+  }, []);
 
-      let user = { name: "Administrator", role: ROLES.ADMIN };
+  const toggleSidebarCollapse = () => {
+    setIsSidebarCollapsed((prev) => {
+      const nextState = !prev;
       try {
-        const parsed = JSON.parse(raw);
-        user = {
-          name: parsed.name || "Administrator",
-          role: parsed.role || ROLES.ADMIN,
-        };
+        localStorage.setItem("admin_sidebar_collapsed", String(nextState));
       } catch {
-        // Fallback for legacy format
+        // Ignore local storage errors
+      }
+      return nextState;
+    });
+  };
+
+  // ─── SECURE SESSION MANAGEMENT ────────────────────────────────────────────
+  const sessionTimerRef = useRef(null);
+  const redirectingRef = useRef(false);
+
+  useEffect(() => {
+    let mounted = true;
+    let requestController = null;
+
+    const clearSessionTimer = () => {
+      if (sessionTimerRef.current) {
+        clearTimeout(sessionTimerRef.current);
+        sessionTimerRef.current = null;
+      }
+    };
+
+    const redirectExpired = async () => {
+      if (redirectingRef.current) return;
+
+      redirectingRef.current = true;
+      clearSessionTimer();
+
+      if (mounted) {
+        setIsAuthChecking(true);
       }
 
-      setCurrentUser(user);
-      setIsAuthChecking(false);
-    };
-    verifyAccess();
-  }, [router]);
+      try {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          credentials: "same-origin",
+        });
+      } catch (error) {
+        console.error("Session logout request failed:", error);
+      }
 
+      localStorage.removeItem("adminuser");
+
+      window.location.replace("/signin?reason=session_expired");
+    };
+
+    const verifyAccess = async () => {
+      if (!mounted || redirectingRef.current) return;
+
+      if (requestController) {
+        requestController.abort();
+      }
+
+      const controller = new AbortController();
+      requestController = controller;
+
+      try {
+        const response = await fetch("/api/auth/session-status", {
+          method: "GET",
+          credentials: "same-origin",
+          cache: "no-store",
+          signal: controller.signal,
+        });
+
+        if (!mounted || controller.signal.aborted) {
+          return;
+        }
+
+        if (response.status === 401) {
+          await redirectExpired();
+          return;
+        }
+
+        if (!response.ok) {
+          console.error("Session status check failed:", response.status);
+          return;
+        }
+
+        const data = await response.json();
+
+        if (!mounted || controller.signal.aborted) {
+          return;
+        }
+
+        const validRole = Object.values(ROLES).includes(data.role);
+        const validExpiry = Number.isFinite(data.expiresAt);
+
+        if (!data.authenticated || !validRole || !validExpiry) {
+          await redirectExpired();
+          return;
+        }
+
+        const remainingMs = data.expiresAt - Date.now();
+
+        if (remainingMs <= 0) {
+          await redirectExpired();
+          return;
+        }
+
+        clearSessionTimer();
+
+        sessionTimerRef.current = setTimeout(
+          redirectExpired,
+          Math.min(remainingMs, 2147483647)
+        );
+
+        let displayName = "Administrator";
+
+        try {
+          const raw = localStorage.getItem("adminuser");
+
+          if (raw) {
+            const parsed = JSON.parse(raw);
+
+            if (
+              typeof parsed?.name === "string" &&
+              parsed.name.trim()
+            ) {
+              displayName = parsed.name;
+            }
+          }
+        } catch {
+          // Invalid display cache does not grant access.
+        }
+
+        if (mounted) {
+          setCurrentUser({
+            name: displayName,
+            role: data.role,
+          });
+
+          setIsAuthChecking(false);
+        }
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          console.error("Session verification unavailable:", error);
+        }
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        verifyAccess();
+      }
+    };
+
+    const handleFocus = () => {
+      verifyAccess();
+    };
+
+    verifyAccess();
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      mounted = false;
+
+      if (requestController) {
+        requestController.abort();
+      }
+
+      clearSessionTimer();
+
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, []);
+
+  // ─── CLOSE MOBILE SIDEBAR ON NAVIGATION ──────────────────────────────────
   useEffect(() => {
     setIsSidebarOpen(false);
   }, [pathname]);
 
-  // ─── LOGOUT ─────────────────────────────────────────────────────────────
+  // ─── MANUAL LOGOUT ────────────────────────────────────────────────────────
   const handleLogout = () => {
     Swal.fire({
       title: "Sign Out",
@@ -300,10 +513,22 @@ const AdminLayout = ({ children }) => {
       cancelButtonText: "Cancel",
     }).then(async (result) => {
       if (result.isConfirmed) {
+        if (redirectingRef.current) return;
+
+        redirectingRef.current = true;
+
+        if (sessionTimerRef.current) {
+          clearTimeout(sessionTimerRef.current);
+          sessionTimerRef.current = null;
+        }
+
         try {
-          await fetch("/api/auth/logout", { method: "POST" });
-        } catch (e) {
-          console.error("Logout API call failed:", e);
+          await fetch("/api/auth/logout", {
+            method: "POST",
+            credentials: "same-origin",
+          });
+        } catch (error) {
+          console.error("Logout API call failed:", error);
         }
 
         localStorage.removeItem("adminuser");
@@ -316,25 +541,27 @@ const AdminLayout = ({ children }) => {
           showConfirmButton: false,
           timer: 1200,
         }).then(() => {
-          router.push("/signin");
-          router.refresh();
+          window.location.replace("/signin");
         });
       }
     });
   };
 
+  // ─── AUTH LOADING SCREEN ─────────────────────────────────────────────────
   if (isAuthChecking) {
     return (
       <div className="admin-isolated-theme h-screen w-screen flex flex-col items-center justify-center font-sans">
         <div className="relative flex items-center justify-center mb-6">
           <div className="absolute w-[80px] h-[80px] border-[3px] rounded-full animate-ping opacity-25" />
-          <div className="w-[64px] h-[64px] rounded-full flex items-center justify-center shadow-sm z-10 border">
+          <div className="w-[64px] h-[64px] rounded-full flex items-center justify-center shadow-sm z-10 border bg-white">
             <ShieldCheck size={32} />
           </div>
         </div>
+
         <h2 className="text-[24px] font-bold tracking-tight mb-2">
           Verifying Access
         </h2>
+
         <p className="text-[14px] flex items-center gap-2 font-medium">
           <Loader2 size={16} className="animate-spin" />
           Securing connection...
@@ -343,9 +570,10 @@ const AdminLayout = ({ children }) => {
     );
   }
 
-  const visibleNavGroups = getNavForRole(currentUser?.role || ROLES.ADMIN);
+  // ─── VERIFIED USER PRESENTATION ──────────────────────────────────────────
+  const visibleNavGroups = getNavForRole(currentUser?.role);
   const displayName = currentUser?.name || "Administrator";
-  const displayRole = ROLE_LABELS[currentUser?.role] || "Admin";
+  const displayRole = ROLE_LABELS[currentUser?.role] || "Unknown Role";
   const initials = getInitials(displayName);
 
   return (
@@ -360,59 +588,104 @@ const AdminLayout = ({ children }) => {
 
       {/* ─── SIDEBAR ─── */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-[260px] transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 shrink-0 border-r ${
+        className={`fixed inset-y-0 left-0 z-50 transform transition-all duration-300 ease-in-out lg:relative lg:translate-x-0 shrink-0 border-r ${
+          isSidebarCollapsed ? "lg:w-[72px]" : "lg:w-[260px]"
+        } w-[260px] ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex flex-col h-full">
           {/* Logo Section */}
-          <div className="h-[72px] flex items-center justify-between px-6 border-b shrink-0">
+          <div className={`h-[72px] flex items-center border-b shrink-0 px-4 transition-all duration-300 ${
+            isSidebarCollapsed ? "lg:justify-center" : "justify-between px-6"
+          }`}>
             <Link
               href="/admin"
-              className="flex items-center gap-1.5 focus:outline-none"
+              className="flex items-center gap-2 focus:outline-none overflow-hidden"
+              title="PieSoluttion Admin"
             >
-              <span className="font-heading font-black text-lg tracking-tight">
-                Pie<span>Solution</span>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm shrink-0 shadow-sm border bg-[var(--adm-surface-sub)]">
+                P
+              </div>
+              <span
+                className={`font-black text-lg tracking-tight whitespace-nowrap transition-all duration-200 ${
+                  isSidebarCollapsed ? "lg:hidden" : "block"
+                }`}
+              >
+                Pie<span className="opacity-90">Soluttion</span>
               </span>
             </Link>
+
+            {/* Mobile Close Button */}
             <button
               onClick={() => setIsSidebarOpen(false)}
-              className="lg:hidden p-2 rounded-lg transition-colors"
+              className="lg:hidden p-2 rounded-lg transition-colors border"
+              aria-label="Close sidebar"
             >
-              <X size={20} />
+              <X size={18} />
             </button>
           </div>
 
           {/* Navigation Items */}
-          <div className="flex-1 overflow-y-auto py-6 px-4 space-y-8 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto py-5 px-3 space-y-6 custom-scrollbar overflow-x-hidden">
             {visibleNavGroups.map((group, idx) => (
-              <div key={idx}>
-                <h3 className="px-3 text-[11px] font-bold uppercase tracking-wider mb-3">
-                  {group.title}
-                </h3>
+              <div key={idx} className="space-y-1">
+                {/* Section Title or Compact Divider */}
+                {isSidebarCollapsed ? (
+                  <div className="hidden lg:flex justify-center my-3">
+                    <div className="w-5 h-[1.5px] rounded-full bg-[var(--adm-border)]" />
+                  </div>
+                ) : (
+                  <h3 className="px-3 text-[10.5px] font-extrabold uppercase tracking-wider mb-2.5 opacity-70">
+                    {group.title}
+                  </h3>
+                )}
+
                 <ul className="space-y-1">
                   {group.items.map((item) => {
                     const isActive =
                       pathname === item.href ||
                       pathname.startsWith(`${item.href}/`);
+
                     return (
-                      <li key={item.name}>
+                      <li key={item.name} className="relative group">
                         <Link
                           href={item.href}
-                          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all duration-200 group ${
-                            isActive ? "bg-primary" : ""
+                          className={`flex items-center rounded-xl text-[13px] font-semibold transition-all duration-200 ${
+                            isSidebarCollapsed
+                              ? "lg:justify-center lg:px-0 lg:w-11 lg:h-11 mx-auto"
+                              : "px-3 py-2.5 gap-3"
+                          } ${
+                            isActive
+                              ? "bg-primary shadow-sm"
+                              : "hover:bg-[var(--adm-surface-sub)]"
                           }`}
                         >
                           <item.icon
                             size={18}
                             strokeWidth={isActive ? 2.5 : 2}
-                            className="transition-colors"
+                            className="shrink-0 transition-transform duration-200 group-hover:scale-105"
                           />
-                          <span className="flex-1 truncate">{item.name}</span>
-                          {isActive && (
-                            <div className="w-1.5 h-1.5 rounded-full" />
+
+                          <span
+                            className={`flex-1 truncate transition-opacity duration-200 ${
+                              isSidebarCollapsed ? "lg:hidden" : "block"
+                            }`}
+                          >
+                            {item.name}
+                          </span>
+
+                          {isActive && !isSidebarCollapsed && (
+                            <div className="w-1.5 h-1.5 rounded-full shrink-0" />
                           )}
                         </Link>
+
+                        {/* Collapsed Tooltip */}
+                        {isSidebarCollapsed && (
+                          <div className="hidden lg:group-hover:flex absolute left-full top-1/2 -translate-y-1/2 ml-3.5 z-50 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap shadow-lg border bg-[var(--adm-surface)] text-[var(--adm-text-title)] pointer-events-none">
+                            {item.name}
+                          </div>
+                        )}
                       </li>
                     );
                   })}
@@ -421,27 +694,60 @@ const AdminLayout = ({ children }) => {
             ))}
           </div>
 
-          {/* User Profile Footer */}
-          <div className="p-4 border-t shrink-0">
+          {/* User Profile & Collapse Controls Footer */}
+          <div className="p-3 border-t shrink-0 flex flex-col gap-2 bg-[var(--adm-surface-alt)]">
             <div
               onClick={handleLogout}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors cursor-pointer group"
+              className={`flex items-center rounded-xl transition-all cursor-pointer group hover:bg-[var(--adm-surface-sub)] ${
+                isSidebarCollapsed
+                  ? "lg:justify-center lg:p-2"
+                  : "gap-3 px-3 py-2.5"
+              }`}
+              title={isSidebarCollapsed ? `Sign out (${displayName})` : "Sign Out"}
             >
-              <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold shrink-0 shadow-sm border">
+              <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold shrink-0 shadow-sm border bg-[var(--adm-surface)] text-[12px]">
                 {initials}
               </div>
-              <div className="flex-1 min-w-0">
+
+              <div
+                className={`flex-1 min-w-0 transition-opacity duration-200 ${
+                  isSidebarCollapsed ? "lg:hidden" : "block"
+                }`}
+              >
                 <p className="text-[13px] font-bold truncate leading-tight">
                   {displayName}
                 </p>
-                <p className="text-[11px] font-medium truncate mt-0.5">
+                <p className="text-[10.5px] font-medium truncate mt-0.5 opacity-80">
                   {displayRole}
                 </p>
               </div>
+
               <LogOut
                 size={16}
-                className="transition-colors shrink-0"
+                className={`transition-colors shrink-0 ${
+                  isSidebarCollapsed ? "lg:hidden" : "block"
+                }`}
               />
+            </div>
+
+            {/* Desktop Collapse / Expand Toggle Button */}
+            <div className="hidden lg:flex items-center justify-center pt-1 border-t border-[var(--adm-border)]">
+              <button
+                type="button"
+                onClick={toggleSidebarCollapse}
+                className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold hover:bg-[var(--adm-surface-sub)] transition-colors border"
+                aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                {isSidebarCollapsed ? (
+                  <PanelLeftOpen size={16} />
+                ) : (
+                  <>
+                    <PanelLeftClose size={16} />
+                    <span className="truncate">Collapse Sidebar</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -450,49 +756,71 @@ const AdminLayout = ({ children }) => {
       {/* ─── MAIN CONTENT AREA ─── */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         {/* Top Navbar Header */}
-        <header className="h-[72px] flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0 z-30">
-          <div className="flex items-center gap-4 flex-1">
+        <header className="h-[72px] flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0 z-30 border-b">
+          <div className="flex items-center gap-3 sm:gap-4 flex-1">
+            {/* Mobile Hamburger Button */}
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="lg:hidden p-2 -ml-2 rounded-lg transition-all"
+              className="lg:hidden p-2 -ml-2 rounded-xl transition-all border"
+              aria-label="Open sidebar"
             >
-              <Menu size={22} />
+              <Menu size={20} />
+            </button>
+
+            {/* Top Navbar Collapse Shortcut for Desktop */}
+            <button
+              onClick={toggleSidebarCollapse}
+              className="hidden lg:flex p-2 rounded-xl transition-all border hover:bg-[var(--adm-surface-sub)]"
+              aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {isSidebarCollapsed ? (
+                <PanelLeftOpen size={18} />
+              ) : (
+                <PanelLeftClose size={18} />
+              )}
             </button>
 
             {/* Search Bar */}
             <div className="hidden sm:flex items-center relative w-full max-w-md group">
               <Search
-                size={18}
-                className="absolute left-4 opacity-70 transition-colors"
+                size={17}
+                className="absolute left-4 opacity-70 transition-colors pointer-events-none"
               />
+
               <input
                 type="text"
                 placeholder="Search coupons, stores, or blogs..."
-                className="w-full pl-11 pr-12 py-2.5 rounded-full text-[13px] border transition-all font-medium"
+                className="w-full pl-11 pr-12 py-2 rounded-xl text-[13px] border transition-all font-medium focus:outline-none"
               />
-              <div className="absolute right-3 px-2 py-0.5 rounded text-[10px] font-bold border">
+
+              <div className="absolute right-3 px-2 py-0.5 rounded text-[10px] font-bold border opacity-75">
                 ⌘K
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-5 ml-4">
-            <button className="relative p-2 rounded-lg transition-all">
-              <Bell size={20} />
-              <span className="absolute top-2 right-2 w-2 h-2 rounded-full border" />
+          <div className="flex items-center gap-3 sm:gap-4 ml-4">
+            <button
+              className="relative p-2.5 rounded-xl transition-all border hover:bg-[var(--adm-surface-sub)]"
+              aria-label="Notifications"
+            >
+              <Bell size={18} />
+              <span className="absolute top-2 right-2 w-2 h-2 rounded-full border bg-[var(--adm-gold)]" />
             </button>
 
             <div className="h-6 w-[1px] hidden sm:block border-r" />
 
             <div className="flex items-center gap-2.5 p-1 pr-3 rounded-full border border-transparent">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden shrink-0 shadow-sm border">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden shrink-0 shadow-sm border bg-[var(--adm-surface)]">
                 <span className="font-bold text-[12px]">{initials}</span>
               </div>
+
               <div className="text-left hidden md:block">
                 <p className="text-[12px] font-bold leading-none">
                   {displayName}
                 </p>
-                <p className="text-[10px] font-medium leading-none mt-1">
+                <p className="text-[10px] font-medium leading-none mt-1 opacity-80">
                   {displayRole}
                 </p>
               </div>

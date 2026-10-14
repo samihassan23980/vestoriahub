@@ -1000,64 +1000,69 @@ const EditStorePage = () => {
 
     setIsSaving(true);
 
-    try {
-      const response = await fetch(
-        `/api/admin/stores/${encodeURIComponent(storeId)}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        },
-      );
-
-      const responsePayload = await safeJson(response);
-
-      if (!response.ok) {
-        const details = Array.isArray(responsePayload?.details)
-          ? ` ${responsePayload.details.join(" ")}`
-          : "";
-
-        throw new Error(
-          `${responsePayload?.error || responsePayload?.message || "Failed to update store."}${details}`,
-        );
-      }
-
-      const updatedStore =
-        responsePayload.store ||
-        responsePayload.data?.store ||
-        responsePayload.updatedStore || {
-          ...formData,
-          ...payload,
-          _id: storeId,
-        };
-
-      const normalizedStore = normalizeStoreForForm(updatedStore);
-      const normalizedPayload = buildStorePayload(normalizedStore);
-
-      setFormData(normalizedStore);
-      setResolvedStoreId(normalizedStore._id || storeId);
-      setOriginalSnapshot(JSON.stringify(normalizedPayload));
-
-      setNotice({
-        type: "success",
-        message: responsePayload.message || "Store updated successfully.",
-      });
-
-      router.refresh();
-    } catch (error) {
-      console.error("Store update failed:", error);
-
-      setNotice({
-        type: "error",
-        message: error.message || "Failed to update store.",
-      });
-
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } finally {
-      setIsSaving(false);
+  try {
+  const response = await fetch(
+    `/api/admin/stores/${encodeURIComponent(storeId)}`,
+    {
+      method: "PUT",
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
     }
+  );
+
+  const responsePayload = await safeJson(response);
+
+  if (!response.ok) {
+    const details = Array.isArray(responsePayload?.details)
+      ? ` ${responsePayload.details.join(" ")}`
+      : "";
+
+    throw new Error(
+      `${responsePayload?.error || responsePayload?.message || "Failed to update store."}${details}`
+    );
+  }
+
+  const updatedStore =
+    responsePayload.store ||
+    responsePayload.data?.store ||
+    responsePayload.updatedStore || {
+      ...formData,
+      ...payload,
+      _id: storeId,
+    };
+
+  const normalizedStore = normalizeStoreForForm(updatedStore);
+  const normalizedPayload = buildStorePayload(normalizedStore);
+
+  setFormData(normalizedStore);
+  setResolvedStoreId(normalizedStore._id || storeId);
+  setOriginalSnapshot(JSON.stringify(normalizedPayload));
+
+  setNotice({
+    type: "success",
+    message:
+      responsePayload.message || "Store updated successfully.",
+  });
+
+  router.refresh();
+} catch (error) {
+  console.error("Store update failed:", error);
+
+  setNotice({
+    type: "error",
+    message: error.message || "Failed to update store.",
+  });
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
+} finally {
+  setIsSaving(false);
+}
   };
 
   const Toggle = ({

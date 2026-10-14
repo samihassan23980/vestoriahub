@@ -140,15 +140,7 @@ const BlogSchema = new mongoose.Schema(
     },
 
     // URL slug: /blog/:slug — always lowercase
-    slug: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true,
-      index: true,
-      maxlength: 200,
-    },
+    slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
 
     // Short teaser shown on blog listing cards (1–2 sentences)
     excerpt: {
