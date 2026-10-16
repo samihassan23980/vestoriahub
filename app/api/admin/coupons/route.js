@@ -32,10 +32,12 @@ export const dynamic = "force-dynamic";
 // ============================================================
 
 const COUPON_ALLOWED_ROLES = new Set([
+  "super_admin",
   "admin",
   "manager",
   "seo_manager",
   "content_manager",
+  "store_editor",
   "coupon_editor",
 ]);
 
