@@ -578,9 +578,7 @@ export default function SingleStoreClient({ initialData, slug }) {
                           <span className="font-heading font-bold text-[14px] text-[#1C352D] group-hover:text-[#D9A441] transition-colors truncate max-w-[140px]">
                             {sim.name}
                           </span>
-                          <span className="text-[11px] font-mono text-[#8A8F8C]">
-                            {sim.activeOffers || 0} Offers
-                          </span>
+                      
                         </div>
                       </div>
 
