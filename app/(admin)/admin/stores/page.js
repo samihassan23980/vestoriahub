@@ -526,9 +526,7 @@ const StoresPage = () => {
         params.set("page", String(page));
         params.set("limit", String(LIMIT));
 
-        if (search) {
-          params.set("search", search);
-        }
+        // Search locally across all filtered pages; the API may require exact names.
 
         if (categoryId) {
           params.set(
@@ -562,6 +560,13 @@ const StoresPage = () => {
           );
         }
 
+        const loadStorePage = async (requestedPage) => {
+          if (signal?.aborted || requestId !== requestIdRef.current) {
+            const error = new Error("Request cancelled.");
+            error.name = "AbortError";
+            throw error;
+          }
+        params.set("page", String(requestedPage));
         const response = await fetch(
           `/api/admin/stores?${params.toString()}`,
           {
@@ -626,6 +631,71 @@ const StoresPage = () => {
               )
             )
         );
+
+
+        const hasPaginationMetadata = [
+          pagination.totalPages, payload?.totalPages, pagination.total,
+          payload?.total, payload?.totalCount, payload?.count,
+        ].some((value) => value != null && Number.isFinite(Number(value)));
+        return {
+          list,
+          total: nextTotal,
+          totalPages: hasPaginationMetadata ? Math.max(1, nextTotalPages) : null,
+        };
+
+        };
+
+        let list;
+        let nextTotal;
+        let nextTotalPages;
+
+        if (search) {
+          // Fetch every filtered page before substring matching and pagination.
+          const allStores = [];
+          const seenIds = new Set();
+          let requestedPage = 1;
+
+          while (true) {
+            const result = await loadStorePage(requestedPage);
+            let added = 0;
+
+            for (const store of result.list) {
+              if (!seenIds.has(store._id)) {
+                seenIds.add(store._id);
+                allStores.push(store);
+                added += 1;
+              }
+            }
+
+            if (result.totalPages !== null
+              ? requestedPage >= result.totalPages
+              : result.list.length < LIMIT) break;
+
+            if (added === 0) {
+              throw new Error("Could not load all stores for search. Check API pagination.");
+            }
+
+            requestedPage += 1;
+          }
+
+          const query = search.trim().toLowerCase();
+          const matches = allStores.filter((store) =>
+            [store.name, store.officialUrl].some((value) =>
+              String(value ?? "").toLowerCase().includes(query)
+            )
+          );
+
+          nextTotal = matches.length;
+          nextTotalPages = Math.max(1, Math.ceil(nextTotal / LIMIT));
+          const currentPage = Math.min(page, nextTotalPages);
+          const offset = (currentPage - 1) * LIMIT;
+          list = matches.slice(offset, offset + LIMIT);
+        } else {
+          const result = await loadStorePage(page);
+          list = result.list;
+          nextTotal = result.total;
+          nextTotalPages = result.totalPages ?? 1;
+        }
 
         // Ignore responses from older requests.
         if (requestId !== requestIdRef.current) {
@@ -721,6 +791,7 @@ const StoresPage = () => {
   useEffect(() => {
     const timeout = setTimeout(() => {
       setSearch(searchDraft.trim());
+      setPage(1);
     }, 350);
 
     return () => {
@@ -970,7 +1041,6 @@ const StoresPage = () => {
               value={searchDraft}
               onChange={(e) => {
                 setSearchDraft(e.target.value);
-                setPage(1);
               }}
               className="w-full pl-10 pr-4 py-2.5 bg-[#F7F6FF] border-[1.5px] border-[#E0DEF5] rounded-lg text-[14px] text-[#1A1340] placeholder:text-[#7775A0] focus:outline-none focus:border-[#2D2380] focus:ring-2 focus:ring-[#2D2380]/10 transition-all"
             />
