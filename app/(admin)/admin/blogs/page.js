@@ -1,3 +1,5 @@
+/* app/admin/blogs/page.js */
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -20,7 +22,6 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-// --- Helper to extract array safely based on API response structures ---
 const getArrayFromApi = (data, key) => {
   if (Array.isArray(data)) return data;
   if (data && Array.isArray(data[key])) return data[key];
@@ -30,14 +31,12 @@ const getArrayFromApi = (data, key) => {
 };
 
 export default function BlogManagementPage() {
-  // ─── STATES ─────────────────────────────────────────────────────────────
   const [blogs, setBlogs] = useState([]);
   const [categories, setCategories] = useState([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Filters & Pagination
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -50,16 +49,14 @@ export default function BlogManagementPage() {
     totalPages: 1,
   });
 
-  // ─── DEBOUNCE SEARCH ────────────────────────────────────────────────────
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchQuery);
-      setPagination((prev) => ({ ...prev, page: 1 })); // Reset to page 1 on new search
+      setPagination((prev) => ({ ...prev, page: 1 }));
     }, 500);
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  // ─── FETCH CATEGORIES ───────────────────────────────────────────────────
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -73,11 +70,9 @@ export default function BlogManagementPage() {
     fetchCategories();
   }, []);
 
-  // ─── FETCH BLOGS ────────────────────────────────────────────────────────
   const fetchBlogs = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Build query string dynamically
       const params = new URLSearchParams({
         page: pagination.page,
         limit: pagination.limit,
@@ -86,15 +81,14 @@ export default function BlogManagementPage() {
       if (selectedCategory) params.append("category", selectedCategory);
       if (selectedStatus) params.append("status", selectedStatus);
 
-      const res = await fetch(`/api/admin/blogs?${params.toString()}`);
+      // Connected directly to the dedicated search API endpoint
+      const res = await fetch(`/api/admin/blogs/search?${params.toString()}`);
       const json = await res.json();
 
       if (res.ok) {
-        // Handle both standard formats: { data: [...] } or { blogs: [...] }
         const fetchedBlogs = json.data || json.blogs || [];
         setBlogs(fetchedBlogs);
 
-        // Update pagination if provided by backend
         if (json.pagination) {
           setPagination(json.pagination);
         } else if (json.total) {
@@ -130,15 +124,14 @@ export default function BlogManagementPage() {
     fetchBlogs();
   }, [fetchBlogs]);
 
-  // ─── DELETE HANDLER ─────────────────────────────────────────────────────
-  const handleDelete = async (id, title, slug) => {
+  const handleDelete = async (id, title) => {
     const confirm = await Swal.fire({
       title: "Are you sure?",
       html: `You are about to delete <strong>"${title}"</strong>.<br/>This action cannot be undone!`,
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#E24B4A", // Alert Red
-      cancelButtonColor: "#7775A0", // Muted Slate
+      confirmButtonColor: "#E24B4A",
+      cancelButtonColor: "#7775A0",
       confirmButtonText: "Yes, delete it!",
     });
 
@@ -146,7 +139,6 @@ export default function BlogManagementPage() {
 
     setIsDeleting(true);
     try {
-      // Pass the ID to the API instead of the slug
       const res = await fetch(`/api/admin/blogs/${id}`, {
         method: "DELETE",
       });
@@ -164,7 +156,6 @@ export default function BlogManagementPage() {
         showConfirmButton: false,
       });
 
-      // Refresh the list
       fetchBlogs();
     } catch (error) {
       Swal.fire({
@@ -178,7 +169,6 @@ export default function BlogManagementPage() {
     }
   };
 
-  // ─── HELPERS ────────────────────────────────────────────────────────────
   const getStatusBadge = (status) => {
     if (status === "published") {
       return (
@@ -197,15 +187,10 @@ export default function BlogManagementPage() {
   return (
     <div className="min-h-screen bg-[#F7F6FF] p-6 md:p-8">
       <div className="max-w-[1280px] mx-auto space-y-6">
-        {/* ─── PAGE HEADER ─── */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-[32px] font-bold text-[#1A1340] leading-tight flex items-center gap-3">
-              <FileText
-                className="text-[#F4A836]"
-                size={32}
-                strokeWidth={2.5}
-              />
+              <FileText className="text-[#F4A836]" size={32} strokeWidth={2.5} />
               Blog Editor
             </h1>
             <p className="text-[#7775A0] text-[16px] mt-1">
@@ -221,7 +206,6 @@ export default function BlogManagementPage() {
           </Link>
         </div>
 
-        {/* ─── TOOLBAR (SEARCH & FILTERS) ─── */}
         <div className="bg-white border border-[#E0DEF5] rounded-xl p-4 shadow-sm flex flex-col md:flex-row items-center gap-4">
           <div className="relative w-full md:w-[400px]">
             <Search
@@ -276,9 +260,7 @@ export default function BlogManagementPage() {
           </div>
         </div>
 
-        {/* ─── BLOG LIST TABLE ─── */}
         <div className="bg-white border border-[#E0DEF5] rounded-xl shadow-sm overflow-hidden relative">
-          {/* Deleting Overlay */}
           {isDeleting && (
             <div className="absolute inset-0 bg-white/60 backdrop-blur-sm z-10 flex items-center justify-center">
               <Loader2 className="animate-spin text-[#2D2380]" size={40} />
@@ -298,7 +280,6 @@ export default function BlogManagementPage() {
               </thead>
               <tbody className="divide-y divide-[#E0DEF5]">
                 {isLoading ? (
-                  // Skeleton Rows
                   [...Array(5)].map((_, i) => (
                     <tr key={i} className="animate-pulse">
                       <td className="px-6 py-5">
@@ -337,37 +318,23 @@ export default function BlogManagementPage() {
                     </tr>
                   ))
                 ) : blogs.length === 0 ? (
-                  // Empty State
                   <tr>
                     <td colSpan="5" className="px-6 py-16 text-center">
-                      <AlertCircle
-                        className="mx-auto text-[#7775A0] mb-3"
-                        size={32}
-                      />
-                      <p className="text-[16px] font-bold text-[#1A1340]">
-                        No articles found
-                      </p>
+                      <AlertCircle className="mx-auto text-[#7775A0] mb-3" size={32} />
+                      <p className="text-[16px] font-bold text-[#1A1340]">No articles found</p>
                       <p className="text-[14px] text-[#7775A0]">
-                        Try adjusting your search or filters, or create a new
-                        post.
+                        Try adjusting your search or filters, or create a new post.
                       </p>
                     </td>
                   </tr>
                 ) : (
-                  // Real Data Rows
                   blogs.map((post) => (
-                    <tr
-                      key={post._id}
-                      className="hover:bg-[#EEEDFE]/30 transition-colors group"
-                    >
-                      {/* Title & Preview */}
+                    <tr key={post._id} className="hover:bg-[#EEEDFE]/30 transition-colors group">
                       <td className="px-6 py-5">
                         <div className="flex items-start gap-4">
                           <div className="w-20 h-14 rounded-lg overflow-hidden bg-[#F7F6FF] border border-[#E0DEF5] shrink-0">
                             <img
-                              src={
-                                post.featuredImage?.url || "/fallback-blog.jpg"
-                              }
+                              src={post.featuredImage?.url || "/fallback-blog.jpg"}
                               alt={post.featuredImage?.alt || post.title}
                               className="w-full h-full object-cover"
                             />
@@ -384,35 +351,27 @@ export default function BlogManagementPage() {
                                 {post.category?.name || "Uncategorized"}
                               </span>
                               <span className="flex items-center gap-1 text-[#7775A0] text-[11px] font-medium">
-                                <Clock size={12} /> {post.readTimeMinutes || 1}{" "}
-                                min read
+                                <Clock size={12} /> {post.readTimeMinutes || 1} min read
                               </span>
                             </div>
                           </div>
                         </div>
                       </td>
-
-                      {/* Status & Date */}
                       <td className="px-6 py-5">
                         <div className="space-y-1.5">
                           {getStatusBadge(post.status)}
                           <div className="flex items-center gap-1.5 text-[#7775A0] text-[12px]">
                             <Calendar size={13} />
                             {post.publishedAt
-                              ? new Date(post.publishedAt).toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    year: "numeric",
-                                    month: "short",
-                                    day: "numeric",
-                                  },
-                                )
+                              ? new Date(post.publishedAt).toLocaleDateString("en-US", {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                })
                               : "Not Scheduled"}
                           </div>
                         </div>
                       </td>
-
-                      {/* Author */}
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-2">
                           {post.author?.avatar ? (
@@ -423,9 +382,7 @@ export default function BlogManagementPage() {
                             />
                           ) : (
                             <div className="w-7 h-7 rounded-full bg-[#2D2380] flex items-center justify-center text-white text-[10px] font-bold">
-                              {(post.author?.name || "S")
-                                .charAt(0)
-                                .toUpperCase()}
+                              {(post.author?.name || "S").charAt(0).toUpperCase()}
                             </div>
                           )}
                           <span className="text-[#1A1340] font-semibold text-[13px]">
@@ -433,8 +390,6 @@ export default function BlogManagementPage() {
                           </span>
                         </div>
                       </td>
-
-                      {/* Engagement Stats */}
                       <td className="px-6 py-5">
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-1.5 text-[#1A1340] font-bold text-[14px]">
@@ -446,8 +401,6 @@ export default function BlogManagementPage() {
                           </span>
                         </div>
                       </td>
-
-                      {/* Quick Actions */}
                       <td className="px-6 py-5 text-right">
                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           {post.status === "published" && (
@@ -469,9 +422,7 @@ export default function BlogManagementPage() {
                             <Edit size={18} />
                           </Link>
                           <button
-                            onClick={() =>
-                              handleDelete(post._id, post.title, post.slug)
-                            } // Pass post._id here!
+                            onClick={() => handleDelete(post._id, post.title)}
                             className="p-2 text-[#7775A0] hover:text-[#E24B4A] hover:bg-[#FCEBEB] rounded-lg transition-colors"
                             title="Delete"
                           >
@@ -486,7 +437,6 @@ export default function BlogManagementPage() {
             </table>
           </div>
 
-          {/* Pagination Footer */}
           {!isLoading && blogs.length > 0 && (
             <div className="px-6 py-4 border-t border-[#E0DEF5] bg-white flex flex-col md:flex-row items-center justify-between gap-4">
               <p className="text-[13px] text-[#7775A0] font-medium">
@@ -496,30 +446,21 @@ export default function BlogManagementPage() {
                 </strong>{" "}
                 to{" "}
                 <strong className="text-[#1A1340]">
-                  {Math.min(
-                    pagination.page * pagination.limit,
-                    pagination.total,
-                  )}
+                  {Math.min(pagination.page * pagination.limit, pagination.total)}
                 </strong>{" "}
-                of{" "}
-                <strong className="text-[#1A1340]">{pagination.total}</strong>{" "}
-                Articles
+                of <strong className="text-[#1A1340]">{pagination.total}</strong> Articles
               </p>
               <div className="flex gap-2">
                 <button
                   disabled={pagination.page <= 1}
-                  onClick={() =>
-                    setPagination((p) => ({ ...p, page: p.page - 1 }))
-                  }
+                  onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
                   className="px-4 py-1.5 border border-[#E0DEF5] rounded-md text-[13px] font-bold text-[#7775A0] hover:bg-[#F7F6FF] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Previous
                 </button>
                 <button
                   disabled={pagination.page >= pagination.totalPages}
-                  onClick={() =>
-                    setPagination((p) => ({ ...p, page: p.page + 1 }))
-                  }
+                  onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
                   className="px-4 py-1.5 bg-[#2D2380] border border-[#2D2380] rounded-md text-[13px] font-bold text-white shadow-sm hover:bg-[#4A3DBF] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Next
