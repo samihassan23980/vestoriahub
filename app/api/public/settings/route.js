@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import SiteSettings from "@/app/models/siteSettings";
 
-const SINGLETON_ID = "sociantech-global";
+const SINGLETON_ID = "VestoriaHub-global";
 
 export async function GET(req) {
   try {
@@ -20,7 +20,7 @@ export async function GET(req) {
       return NextResponse.json(
         {
           settings: {
-            siteName: "Sociantech",
+            siteName: "VestoriaHub",
             maintenanceMode: false,
             branding: {},
             socials: {},
